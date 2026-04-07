@@ -1,0 +1,6 @@
+
+[mcp_servers.miluju-browse]
+command = "/Users/wonyong/.nvm/versions/node/v20.20.2/bin/node"
+args = ["/Users/wonyong/Desktop/myproject/miluju-studio/dist/browse/server.js"]
+cwd = "/Users/wonyong/Desktop/myproject/miluju-studio"
+startup_timeout_sec = 60

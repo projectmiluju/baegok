@@ -1,0 +1,18 @@
+{
+  "skills": {
+    "skillVersions": {
+      "spec": "0.0.0",
+      "ui": "1.0.0",
+      "build": "0.0.0",
+      "qa": "1.0.1",
+      "ship": "0.0.0",
+      "ops": "1.0.0",
+      "docs": "1.0.0"
+    },
+    "agents": [
+      "gemini"
+    ],
+    "installedAt": "2026-04-07T07:54:04.046Z",
+    "miluVersion": "0.1.2"
+  }
+}
