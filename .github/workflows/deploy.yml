@@ -1,0 +1,15 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # TODO: Docker 빌드 + ECR 푸시 + EC2 배포
+      - name: Deploy placeholder
+        run: echo "배포 파이프라인 — 추후 구현"
