@@ -33,17 +33,17 @@ IT 교육생들이 매일 커밋하는 코드를 AI가 자동으로 분석하여
 
 ## 기술 스택
 
-| 레이어 | 기술 |
-|--------|------|
-| 프론트엔드 | Next.js 16, TypeScript, TailwindCSS, Zustand |
-| 메인 백엔드 | Node.js, TypeScript, Hono, Prisma, Zod, JWT |
-| AI 서버 | Python, FastAPI, LangChain, Claude API, Celery, Beat |
-| MCP 서버 | TypeScript MCP SDK |
-| 메시지 큐 | Kafka, Zookeeper |
-| DB | PostgreSQL (RDS), Redis (ElastiCache) |
-| 인프라 | AWS EC2, Docker Compose, Nginx |
-| CI/CD | GitHub Actions |
-| 도메인 | Gabia + Route53 |
+| 레이어      | 기술                                                 |
+| ----------- | ---------------------------------------------------- |
+| 프론트엔드  | Next.js 16, TypeScript, TailwindCSS, Zustand         |
+| 메인 백엔드 | Node.js, TypeScript, Hono, Prisma, Zod, JWT          |
+| AI 서버     | Python, FastAPI, LangChain, Claude API, Celery, Beat |
+| MCP 서버    | TypeScript MCP SDK                                   |
+| 메시지 큐   | Kafka, Zookeeper                                     |
+| DB          | PostgreSQL (RDS), Redis (ElastiCache)                |
+| 인프라      | AWS EC2, Docker Compose, Nginx                       |
+| CI/CD       | GitHub Actions                                       |
+| 도메인      | Gabia + Route53                                      |
 
 기술 결정 근거는 [ADR 문서](docs/decisions/)를 참고하세요.
 
@@ -88,7 +88,7 @@ GITHUB_CLIENT_ID=
 GITHUB_CLIENT_SECRET=
 
 # Database
-DATABASE_URL=postgresql://user:password@localhost:5432/baegok
+DATABASE_URL=postgresql://baegok:baegok@localhost:5432/baegok
 
 # Redis
 REDIS_URL=redis://localhost:6379
@@ -100,7 +100,14 @@ KAFKA_BOOTSTRAP_SERVERS=localhost:9092
 ANTHROPIC_API_KEY=
 
 # JWT
-JWT_SECRET=
+JWT_SECRET=your-secret-key-change-in-production
+
+# CORS
+CORS_ORIGIN=http://localhost:3000
+
+# Ports
+PORT=4000
+AI_PORT=8000
 ```
 
 ### 로컬 실행
@@ -113,7 +120,7 @@ docker compose up -d
 cd apps/api && bun install && bun dev
 
 # AI 서버
-cd apps/ai && pip install -r requirements.txt && uvicorn main:app --reload
+cd apps/ai && pip install -r requirements.txt && uvicorn src.main:app --reload --port 8000
 
 # 프론트엔드
 cd apps/web && bun install && bun dev
