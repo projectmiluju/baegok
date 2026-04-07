@@ -17,9 +17,9 @@ app.get("/health", (c) => {
   return c.json({ status: "ok", timestamp: new Date().toISOString() });
 });
 
-const port = Number(process.env.PORT) || 4000;
+export { app };
 
-console.log(`API 서버 시작: http://localhost:${port}`);
+const port = Number(process.env.PORT) || 4000;
 
 export default {
   port,
