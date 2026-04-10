@@ -141,6 +141,36 @@ describe("GET /api/repositories/github", () => {
     expect(body.repos).toHaveLength(1);
     expect(body.repos[0]?.id).toBe(100);
   });
+
+  it("page가 0이면 400을 반환한다", async () => {
+    const res = await app.fetch(
+      new Request("http://localhost/api/repositories/github?page=0", {
+        headers: authHeader(),
+      }),
+    );
+    expect(res.status).toBe(400);
+  });
+
+  it("page가 문자열이면 400을 반환한다", async () => {
+    const res = await app.fetch(
+      new Request("http://localhost/api/repositories/github?page=abc", {
+        headers: authHeader(),
+      }),
+    );
+    expect(res.status).toBe(400);
+  });
+
+  it("GitHub API 실패 시 502를 반환한다", async () => {
+    fetchUserReposMock.mockImplementationOnce(async () => {
+      throw new Error("GitHub 500");
+    });
+    const res = await app.fetch(
+      new Request("http://localhost/api/repositories/github", {
+        headers: authHeader(),
+      }),
+    );
+    expect(res.status).toBe(502);
+  });
 });
 
 describe("GET /api/repositories", () => {
@@ -159,6 +189,17 @@ describe("GET /api/repositories", () => {
 });
 
 describe("POST /api/repositories", () => {
+  it("invalid JSON body는 400을 반환한다", async () => {
+    const res = await app.fetch(
+      new Request("http://localhost/api/repositories", {
+        method: "POST",
+        headers: { ...authHeader(), "content-type": "application/json" },
+        body: "not json{{{",
+      }),
+    );
+    expect(res.status).toBe(400);
+  });
+
   it("레포를 연결하고 Webhook을 생성한다", async () => {
     const res = await app.fetch(
       new Request("http://localhost/api/repositories", {

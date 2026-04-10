@@ -8,16 +8,21 @@ import { authMiddleware, type AuthVariables } from "@/middlewares/auth";
 import { fetchUserRepos, createWebhook, deleteWebhook } from "@/services/github-api";
 
 const TEXT = {
+  userNotFound: "사용자를 찾을 수 없습니다",
   repoNotFound: "레포를 찾을 수 없습니다",
   alreadyConnected: "이미 연결된 레포입니다",
   webhookFailed: "GitHub Webhook 등록에 실패했습니다",
-  disconnectFailed: "레포 연결 해제에 실패했습니다",
+  githubApiFailed: "GitHub API 호출에 실패했습니다",
+  invalidBody: "요청 본문이 올바르지 않습니다",
+  invalidPage: "page는 1 이상의 정수여야 합니다",
 } as const;
 
 const connectBodySchema = z.object({
   githubRepoId: z.number().int().positive(),
   fullName: z.string().min(1),
 });
+
+const pageSchema = z.coerce.number().int().min(1).default(1);
 
 export const repositoryRoute = new Hono<{ Variables: AuthVariables }>();
 
@@ -29,19 +34,27 @@ repositoryRoute.use("*", authMiddleware);
  */
 repositoryRoute.get("/github", async (c) => {
   const { sub } = c.get("user");
-  const page = Number(c.req.query("page") ?? "1");
+  const pageResult = pageSchema.safeParse(c.req.query("page") ?? "1");
+  if (!pageResult.success) {
+    return c.json({ error: TEXT.invalidPage }, 400);
+  }
 
   const user = await prisma.user.findUnique({
     where: { id: sub },
     select: { accessToken: true },
   });
   if (!user) {
-    return c.json({ error: TEXT.repoNotFound }, 404);
+    return c.json({ error: TEXT.userNotFound }, 404);
   }
 
-  const accessToken = decryptToken(user.accessToken);
-  const repos = await fetchUserRepos(accessToken, page);
-  return c.json({ repos });
+  try {
+    const accessToken = decryptToken(user.accessToken);
+    const repos = await fetchUserRepos(accessToken, pageResult.data);
+    return c.json({ repos });
+  } catch (error) {
+    console.error("[repositories] GitHub 레포 목록 조회 실패", error);
+    return c.json({ error: TEXT.githubApiFailed }, 502);
+  }
 });
 
 /**
@@ -70,7 +83,15 @@ repositoryRoute.get("/", async (c) => {
 repositoryRoute.post("/", async (c) => {
   const { sub } = c.get("user");
   const env = getEnv();
-  const body = connectBodySchema.safeParse(await c.req.json());
+
+  let rawBody: unknown;
+  try {
+    rawBody = await c.req.json();
+  } catch {
+    return c.json({ error: TEXT.invalidBody }, 400);
+  }
+
+  const body = connectBodySchema.safeParse(rawBody);
   if (!body.success) {
     return c.json({ error: body.error.flatten().fieldErrors }, 400);
   }
@@ -80,7 +101,7 @@ repositoryRoute.post("/", async (c) => {
     select: { accessToken: true },
   });
   if (!user) {
-    return c.json({ error: TEXT.repoNotFound }, 404);
+    return c.json({ error: TEXT.userNotFound }, 404);
   }
 
   // 활성 상태의 동일 레포가 있으면 중복
@@ -177,7 +198,7 @@ repositoryRoute.delete("/:id", async (c) => {
   }
 
   await prisma.repository.update({
-    where: { id: repoId },
+    where: { id: repoId, userId: sub },
     data: { deletedAt: new Date(), isActive: false },
   });
 
