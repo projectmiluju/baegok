@@ -61,7 +61,6 @@ baegok/
 │   ├── decisions/    # 기술 결정 기록 (ADR)
 │   ├── devlog/       # 개발 일지
 │   └── STATUS.md     # 프로젝트 현황
-├── docker-compose.yml
 └── .github/
     ├── ISSUE_TEMPLATE/
     └── PULL_REQUEST_TEMPLATE.md
@@ -83,9 +82,10 @@ cp .env.example .env
 ```
 
 ```env
-# GitHub OAuth
+# GitHub OAuth (https://github.com/settings/developers 에서 등록)
 GITHUB_CLIENT_ID=
 GITHUB_CLIENT_SECRET=
+GITHUB_OAUTH_REDIRECT_URI=http://localhost:4000/api/auth/github/callback
 
 # Database
 DATABASE_URL=postgresql://baegok:baegok@localhost:5432/baegok
@@ -101,6 +101,14 @@ ANTHROPIC_API_KEY=
 
 # JWT
 JWT_SECRET=your-secret-key-change-in-production
+JWT_EXPIRES_IN=7d
+
+# Token Encryption (AES-256-GCM, 64 hex chars = 32 bytes)
+# 생성: openssl rand -hex 32
+TOKEN_ENCRYPTION_KEY=
+
+# Frontend base URL — OAuth 콜백 후 리다이렉트 대상
+WEB_BASE_URL=http://localhost:3000
 
 # CORS
 CORS_ORIGIN=http://localhost:3000
@@ -113,21 +121,33 @@ AI_PORT=8000
 ### 로컬 실행
 
 ```bash
-# 인프라 (PostgreSQL, Redis, Kafka)
-docker compose up -d
+# 1) 인프라 (PostgreSQL, Redis, Kafka)
+#    ⚠️ docker-compose.yml은 아직 작성되지 않았다 (별도 fix 이슈로 처리 예정).
+#    당분간은 PostgreSQL만 임시로 띄운다:
+docker run -d --name baegok-postgres \
+  -e POSTGRES_USER=baegok -e POSTGRES_PASSWORD=baegok -e POSTGRES_DB=baegok \
+  -p 5432:5432 postgres:16
 
-# 메인 백엔드
-cd apps/api && bun install && bun dev
+# 2) 의존성 설치 + Prisma 클라이언트 생성 + 마이그레이션
+bun install
+cd apps/api && bunx prisma generate && bun run db:migrate
 
-# AI 서버
+# 3) 메인 백엔드
+cd apps/api && bun dev
+
+# 4) AI 서버
 cd apps/ai && pip install -r requirements.txt && uvicorn src.main:app --reload --port 8000
 
-# 프론트엔드
-cd apps/web && bun install && bun dev
+# 5) 프론트엔드
+cd apps/web && bun dev
 
-# MCP 서버
-cd apps/mcp && bun install && bun dev
+# 6) MCP 서버
+cd apps/mcp && bun dev
 ```
+
+> **참고:** `bun install`만으로는 `@prisma/client` 타입이 생성되지 않는다.
+> 모노레포에서 prisma의 postinstall 후크가 schema를 자동 탐지하지 못하므로,
+> `apps/api`에서 `bunx prisma generate`를 명시적으로 실행해야 한다.
 
 ## 스크립트
 
@@ -138,9 +158,9 @@ bun run lint:py       # Ruff + Black (Python)
 
 # 테스트
 bun run test          # 전체 테스트
+bun run test:coverage # 전체 테스트 + 커버리지 리포트
 bun run test:api      # API 테스트
-bun run test:ai       # AI 서버 테스트
-bun run test:e2e      # Playwright E2E
+bun run test:e2e      # Playwright E2E (web 워크스페이스)
 
 # 빌드
 bun run build         # 전체 빌드
