@@ -9,7 +9,7 @@ process.env.GITHUB_CLIENT_ID = "test-client-id";
 process.env.GITHUB_CLIENT_SECRET = "test-client-secret";
 process.env.GITHUB_OAUTH_REDIRECT_URI = "http://localhost:4000/api/auth/github/callback";
 process.env.JWT_SECRET = "test-jwt-secret-must-be-16-chars";
-process.env.JWT_EXPIRES_IN = "1h";
+process.env.SESSION_MAX_AGE_SECONDS = "3600";
 process.env.TOKEN_ENCRYPTION_KEY = "a".repeat(64);
 process.env.WEB_BASE_URL = "http://localhost:3000";
 
@@ -203,6 +203,37 @@ describe("auth 미들웨어 — 헤더 파싱", () => {
       }),
     );
     expect(res.status).toBe(200);
+  });
+});
+
+describe("세션 만료 동기화", () => {
+  it("쿠키 max-age와 JWT exp는 SESSION_MAX_AGE_SECONDS 단일 소스에서 파생되어야 한다", async () => {
+    // Arrange — 콜백을 통과시켜 쿠키와 JWT 둘 다 발급받는다
+    const res = await app.fetch(
+      new Request("http://localhost/api/auth/github/callback?code=abc&state=valid-state", {
+        headers: { cookie: "baegok_oauth_state=valid-state" },
+      }),
+    );
+    expect(res.status).toBe(302);
+
+    const setCookie = res.headers.get("set-cookie") ?? "";
+    const cookieMaxAgeMatch = setCookie.match(/baegok_session=[^;]+;.*?Max-Age=(\d+)/i);
+    expect(cookieMaxAgeMatch).not.toBeNull();
+    const cookieMaxAge = Number(cookieMaxAgeMatch?.[1]);
+
+    // 쿠키 토큰을 디코드해 exp를 확인 (서명 검증은 verifyJwt가 따로 함)
+    const tokenMatch = setCookie.match(/baegok_session=([^;]+)/);
+    const decoded = jwt.decode(tokenMatch?.[1] ?? "") as {
+      iat: number;
+      exp: number;
+    } | null;
+    expect(decoded).not.toBeNull();
+    const jwtTtl = (decoded?.exp ?? 0) - (decoded?.iat ?? 0);
+
+    // Assert — 둘이 정확히 같아야 한다 (현재 테스트 env: 3600)
+    expect(cookieMaxAge).toBe(Number(process.env.SESSION_MAX_AGE_SECONDS));
+    expect(jwtTtl).toBe(Number(process.env.SESSION_MAX_AGE_SECONDS));
+    expect(cookieMaxAge).toBe(jwtTtl);
   });
 });
 

@@ -12,11 +12,12 @@ export interface JwtPayload {
 
 /**
  * 사용자 페이로드로 JWT를 발급한다.
+ * 만료는 SESSION_MAX_AGE_SECONDS(쿠키와 동일 소스)를 사용한다.
  */
 export function signJwt(payload: JwtPayload): string {
   const env = getEnv();
   const options: SignOptions = {
-    expiresIn: env.JWT_EXPIRES_IN as SignOptions["expiresIn"],
+    expiresIn: env.SESSION_MAX_AGE_SECONDS,
   };
   return jwt.sign(payload, env.JWT_SECRET, options);
 }

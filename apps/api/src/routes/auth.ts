@@ -5,7 +5,7 @@ import { getEnv } from "@/lib/env";
 import { encryptToken } from "@/lib/crypto";
 import { signJwt } from "@/lib/jwt";
 import { prisma } from "@/lib/prisma";
-import { SESSION_COOKIE_MAX_AGE, SESSION_COOKIE_NAME } from "@/lib/session";
+import { SESSION_COOKIE_NAME } from "@/lib/session";
 import { authMiddleware, type AuthVariables } from "@/middlewares/auth";
 import { buildAuthorizeUrl, exchangeCodeForToken, fetchGithubUser } from "@/services/github-oauth";
 
@@ -97,7 +97,7 @@ authRoute.get("/github/callback", async (c) => {
     secure: env.NODE_ENV === "production",
     sameSite: "Lax",
     path: "/",
-    maxAge: SESSION_COOKIE_MAX_AGE,
+    maxAge: env.SESSION_MAX_AGE_SECONDS,
   });
 
   return c.redirect(`${env.WEB_BASE_URL}/auth/callback`);

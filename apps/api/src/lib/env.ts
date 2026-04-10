@@ -13,7 +13,14 @@ const envSchema = z.object({
   GITHUB_OAUTH_REDIRECT_URI: z.string().url(),
 
   JWT_SECRET: z.string().min(16),
-  JWT_EXPIRES_IN: z.string().default("7d"),
+
+  // 세션 쿠키와 JWT 만료의 단일 소스 (초 단위, 기본 7일).
+  // 쿠키 max-age와 JWT expiresIn 모두 이 값을 사용해 어긋남을 방지한다.
+  SESSION_MAX_AGE_SECONDS: z.coerce
+    .number()
+    .int()
+    .positive()
+    .default(7 * 24 * 60 * 60),
 
   // 64자 hex (32 bytes) — AES-256-GCM 키
   TOKEN_ENCRYPTION_KEY: z
