@@ -61,6 +61,7 @@ baegok/
 │   ├── decisions/    # 기술 결정 기록 (ADR)
 │   ├── devlog/       # 개발 일지
 │   └── STATUS.md     # 프로젝트 현황
+├── docker-compose.yml
 └── .github/
     ├── ISSUE_TEMPLATE/
     └── PULL_REQUEST_TEMPLATE.md
@@ -101,7 +102,10 @@ ANTHROPIC_API_KEY=
 
 # JWT
 JWT_SECRET=your-secret-key-change-in-production
-JWT_EXPIRES_IN=7d
+
+# 세션 만료 (초 단위, 기본 7일 = 604800)
+# JWT 만료와 세션 쿠키 max-age의 단일 소스
+SESSION_MAX_AGE_SECONDS=604800
 
 # Token Encryption (AES-256-GCM, 64 hex chars = 32 bytes)
 # 생성: openssl rand -hex 32
@@ -121,12 +125,8 @@ AI_PORT=8000
 ### 로컬 실행
 
 ```bash
-# 1) 인프라 (PostgreSQL, Redis, Kafka)
-#    ⚠️ docker-compose.yml은 아직 작성되지 않았다 (별도 fix 이슈로 처리 예정).
-#    당분간은 PostgreSQL만 임시로 띄운다:
-docker run -d --name baegok-postgres \
-  -e POSTGRES_USER=baegok -e POSTGRES_PASSWORD=baegok -e POSTGRES_DB=baegok \
-  -p 5432:5432 postgres:16
+# 1) 인프라 (PostgreSQL, Redis, Kafka, Zookeeper)
+docker compose up -d
 
 # 2) 의존성 설치 + Prisma 클라이언트 생성 + 마이그레이션
 bun install

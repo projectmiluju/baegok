@@ -62,6 +62,17 @@ GitHub access_token은 후속 이슈(#4 레포 연결, #5 Webhook 등록, #6 dif
    - 키는 `TOKEN_ENCRYPTION_KEY` 환경변수(64자 hex), 운영에서는 AWS Secrets Manager로 이관 (#12)
    - DB 컬럼 타입은 그대로 `String` 유지 — 형식이 단순 hex 문자열이라 마이그레이션 비용 0
 
+## 부가 결정 — 세션 만료 단일 소스 (PR #14 리뷰 후 추가)
+
+초안 구현에서 `JWT_EXPIRES_IN`(문자열, 환경변수)과 `SESSION_COOKIE_MAX_AGE`(7일 하드코딩 상수)가 독립적이었다. 두 값이 어긋나면:
+
+- JWT가 더 짧으면 → 쿠키는 살아있는데 토큰만 만료 → 영구 401
+- 쿠키가 더 짧으면 → 사용자는 로그아웃됐다고 느끼지만 Bearer 토큰은 살아있음
+
+→ **두 값을 `SESSION_MAX_AGE_SECONDS`(숫자, 초 단위) 단일 환경변수에서 파생시켜 어긋남 자체를 봉쇄.** `jsonwebtoken`은 `expiresIn: number` 형식을 지원하므로 새 의존성 0개. 동기화 검증 테스트로 회귀 차단.
+
+원칙으로 고정: **시간에 관한 값은 단일 소스에서 파생시킨다.** 같은 의미를 두 곳에 적는 것은 곧 버그.
+
 ## 결과 (Consequences)
 
 - **긍정적:**
@@ -69,6 +80,7 @@ GitHub access_token은 후속 이슈(#4 레포 연결, #5 Webhook 등록, #6 dif
   - 헤더 기반 클라이언트(MCP)도 동일 미들웨어로 동작 — 코드 중복 0
   - DB 덤프가 유출되어도 GitHub 토큰은 추가 키 없이는 복호화 불가
   - 모든 암호화/복호화 로직이 `apps/api/src/lib/crypto.ts` 한 파일에 격리됨
+  - 세션 만료가 한 곳(`SESSION_MAX_AGE_SECONDS`)에서만 결정됨 — 어긋남 가능성 0
 
 - **부정적:**
   - CSRF는 별도 방어가 필요 — `SameSite=Lax`로 1차 방어, state 파라미터로 OAuth 콜백 보호
