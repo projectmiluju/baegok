@@ -18,6 +18,7 @@
     "format:py": "cd apps/ai && ruff check --fix . && black .",
     "typecheck": "bun --filter '*' typecheck",
     "test": "bun --filter '*' test",
+    "test:coverage": "bun --filter '*' test:coverage",
     "test:api": "bun --filter api test",
     "test:e2e": "bun --filter web test:e2e",
     "prepare": "husky"
