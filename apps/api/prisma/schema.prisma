@@ -24,14 +24,15 @@ model User {
 }
 
 model Repository {
-  id           String    @id @default(cuid())
-  userId       String    @map("user_id")
-  githubRepoId Int       @map("github_repo_id")
-  fullName     String    @map("full_name")
-  webhookId    Int?      @map("webhook_id")
-  isActive     Boolean   @default(true) @map("is_active")
-  createdAt    DateTime  @default(now()) @map("created_at")
-  deletedAt    DateTime? @map("deleted_at")
+  id            String    @id @default(cuid())
+  userId        String    @map("user_id")
+  githubRepoId  Int       @map("github_repo_id")
+  fullName      String    @map("full_name")
+  webhookId     Int?      @map("webhook_id")
+  webhookSecret String?   @map("webhook_secret")
+  isActive      Boolean   @default(true) @map("is_active")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  deletedAt     DateTime? @map("deleted_at")
 
   user           User             @relation(fields: [userId], references: [id])
   commitAnalyses CommitAnalysis[]

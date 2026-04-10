@@ -29,6 +29,9 @@ const envSchema = z.object({
 
   // OAuth 콜백 후 프론트엔드로 리다이렉트할 베이스 URL
   WEB_BASE_URL: z.string().url().default("http://localhost:3000"),
+
+  // Webhook 콜백을 받을 베이스 URL (개발: ngrok 등, 운영: 실제 도메인)
+  WEBHOOK_BASE_URL: z.string().url(),
 });
 
 export type Env = z.infer<typeof envSchema>;
