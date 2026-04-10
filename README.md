@@ -130,19 +130,19 @@ docker compose up -d
 
 # 2) 의존성 설치 + Prisma 클라이언트 생성 + 마이그레이션
 bun install
-cd apps/api && bunx prisma generate && bun run db:migrate
+(cd apps/api && bunx prisma generate && bun run db:migrate)
 
-# 3) 메인 백엔드
-cd apps/api && bun dev
+# 3) 메인 백엔드 (각각 별도 터미널에서 실행)
+(cd apps/api && bun dev)
 
 # 4) AI 서버
-cd apps/ai && pip install -r requirements.txt && uvicorn src.main:app --reload --port 8000
+(cd apps/ai && pip install -r requirements.txt && uvicorn src.main:app --reload --port 8000)
 
 # 5) 프론트엔드
-cd apps/web && bun dev
+(cd apps/web && bun dev)
 
 # 6) MCP 서버
-cd apps/mcp && bun dev
+(cd apps/mcp && bun dev)
 ```
 
 > **참고:** `bun install`만으로는 `@prisma/client` 타입이 생성되지 않는다.
