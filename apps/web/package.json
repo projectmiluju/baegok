@@ -6,9 +6,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint",
-    "test": "bun test",
-    "test:coverage": "bun test --coverage"
+    "lint": "eslint"
   },
   "dependencies": {
     "next": "16.2.2",
