@@ -6,7 +6,13 @@
 
 ## 최근 변경
 
-- **Issue #3 — GitHub OAuth + JWT 세션 구현 (진행 중, QA 승인)**
+- **Issue #4 — 레포 연결 + GitHub Webhook 자동 등록 (QA 승인)**
+  - `GET /api/repositories/github`, `GET/POST /api/repositories`, `DELETE /api/repositories/:id`
+  - GitHub Webhook push 이벤트 자동 등록, webhook secret AES-256-GCM 암호화 저장
+  - soft-delete 재연결 시 unique constraint 충돌 버그 발견·수정 (QA 단계)
+  - 10개 자동화 테스트 (중복 409, 재연결 재활성화, Webhook 실패 복원력 등)
+  - 자세한 내용: [Dev Log](devlog/2026-04-10-issue-4-repo-webhook.md)
+- **Issue #3 — GitHub OAuth + JWT 세션 구현 (머지 완료)**
   - `/api/auth/github`, `/callback`, `/logout`, `/me` 엔드포인트
   - GitHub access_token AES-256-GCM 암호화 저장 (DB 덤프 노출 시에도 안전)
   - JWT 세션 — httpOnly 쿠키 + Authorization Bearer 동시 지원 (웹/MCP 양립)
@@ -47,7 +53,7 @@
 - [x] DB 스키마 (Prisma)
 - [x] 협업 환경 풀세팅 (린트, 훅, CI/CD)
 - [x] GitHub OAuth 로그인 (#3, QA 승인)
-- [ ] 레포 연결 + Webhook 자동 등록 (#4)
+- [x] 레포 연결 + Webhook 자동 등록 (#4, QA 승인)
 - [ ] Webhook 수신 → Kafka 발행 (#5)
 - [ ] FastAPI Kafka Consumer + Claude 분석 (#6)
 - [ ] 일일 요약 / 기간 리포트 / 로드맵 API (#7~#9)

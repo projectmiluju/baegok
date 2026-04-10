@@ -114,6 +114,9 @@ TOKEN_ENCRYPTION_KEY=
 # Frontend base URL — OAuth 콜백 후 리다이렉트 대상
 WEB_BASE_URL=http://localhost:3000
 
+# Webhook 콜백 베이스 URL (개발: ngrok 등, 운영: 실제 도메인)
+WEBHOOK_BASE_URL=https://your-ngrok-url.ngrok-free.app
+
 # CORS
 CORS_ORIGIN=http://localhost:3000
 
