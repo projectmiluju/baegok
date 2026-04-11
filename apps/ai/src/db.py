@@ -1,16 +1,25 @@
 from __future__ import annotations
 
 import datetime as _dt
+import enum
 from datetime import datetime, timezone
 from typing import Optional
 from uuid import uuid4
 
-from sqlalchemy import JSON, Date, DateTime, Integer, String, Text, func, select, text
+from sqlalchemy import JSON, Date, DateTime, Enum, Integer, String, Text, func, select, text
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 from .config import settings
+
+
+class ReportTypeEnum(str, enum.Enum):
+    """PeriodReport.report_type에 대응하는 PostgreSQL enum."""
+
+    WEEKLY_AUTO = "weekly_auto"
+    CUSTOM = "custom"
+
 
 engine = create_async_engine(settings.database_url, echo=False)
 async_session = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
@@ -215,7 +224,9 @@ class PeriodReport(Base):
     user_id: Mapped[str] = mapped_column(String, nullable=False)
     start_date: Mapped[_dt.date] = mapped_column(Date, nullable=False)
     end_date: Mapped[_dt.date] = mapped_column(Date, nullable=False)
-    report_type: Mapped[str] = mapped_column(String, nullable=False)
+    report_type: Mapped[str] = mapped_column(
+        Enum(ReportTypeEnum, name="ReportType", create_type=False), nullable=False
+    )
     summary: Mapped[dict] = mapped_column(JSON, nullable=False, server_default=text("'{}'::jsonb"))
     roadmap: Mapped[dict] = mapped_column(JSON, nullable=False, server_default=text("'{}'::jsonb"))
     created_at: Mapped[datetime] = mapped_column(
@@ -241,11 +252,13 @@ async def get_daily_summaries_for_period(
     """주어진 기간의 DailySummary 행을 조회한다."""
     async with async_session() as session:
         result = await session.execute(
-            select(DailySummary).where(
+            select(DailySummary)
+            .where(
                 DailySummary.user_id == user_id,
                 DailySummary.date >= start_date,
                 DailySummary.date <= end_date,
             )
+            .order_by(DailySummary.date.asc())
         )
         rows = result.scalars().all()
         return [
@@ -289,20 +302,16 @@ async def save_period_report(
     summary: dict,
     roadmap: dict,
 ) -> None:
-    """PeriodReport를 DB에 저장한다. 중복 시 skip."""
+    """PeriodReport를 DB에 저장한다. 중복 체크는 check_period_report_exists()에서 수행."""
     async with async_session() as session:
-        stmt = (
-            pg_insert(PeriodReport)
-            .values(
-                id=str(uuid4()),
-                user_id=user_id,
-                start_date=start_date,
-                end_date=end_date,
-                report_type=report_type,
-                summary=summary,
-                roadmap=roadmap,
-            )
-            .on_conflict_do_nothing()
+        record = PeriodReport(
+            id=str(uuid4()),
+            user_id=user_id,
+            start_date=start_date,
+            end_date=end_date,
+            report_type=ReportTypeEnum(report_type),
+            summary=summary,
+            roadmap=roadmap,
         )
-        await session.execute(stmt)
+        session.add(record)
         await session.commit()

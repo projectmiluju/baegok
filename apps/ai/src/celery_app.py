@@ -19,7 +19,7 @@ celery_app.conf.timezone = settings.celery_timezone
 celery_app.conf.beat_schedule = {
     "weekly-report": {
         "task": "src.tasks.weekly_report.generate_weekly_reports",
-        "schedule": crontab(hour=0, minute=0, day_of_week=1),  # Mon 00:00 UTC = Mon 09:00 KST
+        "schedule": crontab(hour=9, minute=0, day_of_week=1),  # Mon 09:00 KST
     },
 }
-celery_app.autodiscover_tasks(["src.tasks"])
+celery_app.conf.include = ["src.tasks.weekly_report"]
