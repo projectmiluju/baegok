@@ -29,7 +29,7 @@ async def generate_daily_summary(user_id: str, date: datetime.date) -> None:
     if not analyses:
         await upsert_daily_summary(
             user_id=user_id,
-            date=datetime.datetime.combine(date, datetime.time.min),
+            date=date,
             summary_text="오늘은 커밋 기록이 없습니다",
             commit_count=0,
             tags=[],
@@ -54,7 +54,7 @@ async def generate_daily_summary(user_id: str, date: datetime.date) -> None:
 
     await upsert_daily_summary(
         user_id=user_id,
-        date=datetime.datetime.combine(date, datetime.time.min),
+        date=date,
         summary_text=summary_text,
         commit_count=commit_count,
         tags=unique_tags,

@@ -111,6 +111,15 @@ describe("GET /api/summaries/daily", () => {
     expect(res.status).toBe(400);
   });
 
+  it("유효하지 않은 날짜(예: 2026-99-99)이면 400을 반환한다", async () => {
+    const res = await app.fetch(
+      new Request("http://localhost/api/summaries/daily?date=2026-99-99", {
+        headers: authHeader(),
+      }),
+    );
+    expect(res.status).toBe(400);
+  });
+
   it("요약이 없으면 빈 상태 응답을 반환한다", async () => {
     dailySummaryFindUniqueMock.mockImplementationOnce(async () => null);
     const res = await app.fetch(
@@ -120,10 +129,10 @@ describe("GET /api/summaries/daily", () => {
     );
     expect(res.status).toBe(200);
     const body = (await res.json()) as {
-      summary: { summary_text: string; commit_count: number; tags: unknown[] };
+      summary: { summaryText: string; commitCount: number; tags: unknown[] };
     };
-    expect(body.summary.summary_text).toBe("오늘은 커밋 기록이 없습니다");
-    expect(body.summary.commit_count).toBe(0);
+    expect(body.summary.summaryText).toBe("오늘은 커밋 기록이 없습니다");
+    expect(body.summary.commitCount).toBe(0);
     expect(body.summary.tags).toEqual([]);
   });
 

@@ -29,6 +29,10 @@ summaryRoute.get("/daily", async (c) => {
 
   const targetDate = new Date(parsed.data + "T00:00:00.000Z");
 
+  if (Number.isNaN(targetDate.getTime())) {
+    return c.json({ error: TEXT.invalidDate }, 400);
+  }
+
   try {
     const summary = await prisma.dailySummary.findUnique({
       where: {
@@ -39,8 +43,8 @@ summaryRoute.get("/daily", async (c) => {
     if (!summary) {
       return c.json({
         summary: {
-          summary_text: "오늘은 커밋 기록이 없습니다",
-          commit_count: 0,
+          summaryText: "오늘은 커밋 기록이 없습니다",
+          commitCount: 0,
           tags: [],
         },
       });

@@ -1,10 +1,11 @@
 from __future__ import annotations
 
-from datetime import datetime
+import datetime as _dt
+from datetime import datetime, timezone
 from typing import Optional
 from uuid import uuid4
 
-from sqlalchemy import JSON, DateTime, Integer, String, Text, func, text
+from sqlalchemy import JSON, Date, DateTime, Integer, String, Text, func, text
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
@@ -103,7 +104,7 @@ class DailySummary(Base):
 
     id: Mapped[str] = mapped_column(String, primary_key=True)
     user_id: Mapped[str] = mapped_column(String, nullable=False)
-    date: Mapped[datetime] = mapped_column(DateTime, nullable=False)
+    date: Mapped[_dt.date] = mapped_column(Date, nullable=False)
     summary_text: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     commit_count: Mapped[int] = mapped_column(Integer, nullable=False, server_default=text("0"))
     tags: Mapped[list] = mapped_column(JSON, nullable=False, server_default=text("'[]'::jsonb"))
@@ -117,12 +118,13 @@ class DailySummary(Base):
 
 async def upsert_daily_summary(
     user_id: str,
-    date: datetime,
+    date: _dt.date,
     summary_text: str,
     commit_count: int,
     tags: list[str],
 ) -> None:
     """DailySummary를 upsert한다. (user_id, date) 기준 ON CONFLICT DO UPDATE."""
+    now = datetime.now(timezone.utc)
     async with async_session() as session:
         stmt = (
             pg_insert(DailySummary)
@@ -133,6 +135,7 @@ async def upsert_daily_summary(
                 summary_text=summary_text,
                 commit_count=commit_count,
                 tags=tags,
+                updated_at=now,
             )
             .on_conflict_do_update(
                 index_elements=["user_id", "date"],
@@ -140,7 +143,7 @@ async def upsert_daily_summary(
                     "summary_text": summary_text,
                     "commit_count": commit_count,
                     "tags": tags,
-                    "updated_at": func.now(),
+                    "updated_at": datetime.now(timezone.utc),
                 },
             )
         )
@@ -148,7 +151,7 @@ async def upsert_daily_summary(
         await session.commit()
 
 
-async def get_commit_analyses_for_date(user_id: str, date: datetime) -> list[dict]:
+async def get_commit_analyses_for_date(user_id: str, date: _dt.date) -> list[dict]:
     """주어진 사용자의 특정 날짜 커밋 분석 결과를 조회한다."""
     async with async_session() as session:
         result = await session.execute(
@@ -160,6 +163,7 @@ async def get_commit_analyses_for_date(user_id: str, date: datetime) -> list[dic
                 " WHERE r.user_id = :uid"
                 " AND ca.committed_at::date = :d"
                 " AND ca.deleted_at IS NULL"
+                " AND r.deleted_at IS NULL"
             ),
             {"uid": user_id, "d": date},
         )
@@ -176,7 +180,7 @@ async def get_commit_analyses_for_date(user_id: str, date: datetime) -> list[dic
         ]
 
 
-async def get_user_id_for_repo(repository_id: str) -> str | None:
+async def get_user_id_for_repo(repository_id: str) -> Optional[str]:
     """Repository에서 user_id를 조회한다."""
     async with async_session() as session:
         result = await session.execute(
@@ -187,7 +191,7 @@ async def get_user_id_for_repo(repository_id: str) -> str | None:
         return row if row else None
 
 
-async def get_access_token_for_repo(repository_id: str) -> str | None:
+async def get_access_token_for_repo(repository_id: str) -> Optional[str]:
     """Repository → User join으로 암호화된 access_token을 조회한다."""
     async with async_session() as session:
         result = await session.execute(

@@ -104,17 +104,21 @@ async def process_message(data: dict) -> None:
                 logger.exception("커밋 %s 분석 실패 — 건너뜀 (PRD §4: 재시도 없음)", sha[:7])
                 continue
 
-    # 커밋 처리 완료 후 일일 요약 생성
+    # 커밋 처리 완료 후 일일 요약 생성 (커밋이 여러 날짜에 걸칠 수 있으므로 모든 날짜에 대해 생성)
     try:
         user_id = await get_user_id_for_repo(repository_id)
         if user_id and commits_to_process:
-            # 첫 커밋의 timestamp에서 날짜 추출
-            first_ts = commits_to_process[0].get("timestamp", "")
-            if first_ts:
-                commit_date = datetime.fromisoformat(first_ts.replace("Z", "+00:00")).date()
-            else:
-                commit_date = datetime.now(timezone.utc).date()
-            await generate_daily_summary(user_id, commit_date)
+            distinct_dates: set[str] = set()
+            for commit in commits_to_process:
+                ts = commit.get("timestamp", "")
+                if ts:
+                    commit_date = datetime.fromisoformat(ts.replace("Z", "+00:00")).date()
+                else:
+                    commit_date = datetime.now(timezone.utc).date()
+                distinct_dates.add(commit_date.isoformat())
+            for date_str in distinct_dates:
+                d = datetime.fromisoformat(date_str).date()
+                await generate_daily_summary(user_id, d)
     except Exception:
         logger.exception("일일 요약 생성 실패 (repo: %s)", full_name)
 
