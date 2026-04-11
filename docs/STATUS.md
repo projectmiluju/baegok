@@ -6,7 +6,12 @@
 
 ## 최근 변경
 
-- **Issue #7 — 일일 학습 요약 자동 생성 + 조회 API (QA 승인)**
+- **Issue #8 — 기간 학습 리포트 + 학습 로드맵 생성 (QA 승인)**
+  - Node.js: `POST /api/reports` (생성) + `GET /api/reports` (목록) + `GET /api/reports/:id` (상세)
+  - AI 서버: `POST /ai/generate-report` — Claude로 strengths/weaknesses/stats + roadmap 생성
+  - 환경변수 `AI_API_URL` 추가 (Node.js → FastAPI 내부 호출)
+  - 테스트 15종 (Node.js 10 + Python 5)
+- **Issue #7 — 일일 학습 요약 자동 생성 + 조회 API (머지 완료)**
   - AI 서버: CommitAnalysis 저장 후 DailySummary upsert (Claude 통합 요약 + 태그 병합)
   - Node.js API: `GET /api/summaries/daily?date=` + `GET /api/summaries/daily/:id`
   - 빈 날짜: "오늘은 커밋 기록이 없습니다" (PRD §4)
@@ -73,7 +78,7 @@
 - [x] Webhook 수신 → Kafka 발행 (#5, QA 승인)
 - [x] FastAPI Kafka Consumer + Claude 분석 (#6, QA 승인)
 - [x] 일일 학습 요약 (#7, QA 승인)
-- [ ] 기간 리포트 + 학습 로드맵 (#8)
+- [x] 기간 리포트 + 학습 로드맵 (#8, QA 승인)
 - [ ] Celery Beat 주간 자동 리포트 (#9)
 - [ ] 대시보드 UI (#10)
 - [ ] MCP 서버 (#11)
