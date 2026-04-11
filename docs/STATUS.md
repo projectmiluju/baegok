@@ -6,7 +6,7 @@
 
 ## 최근 변경
 
-- **Issue #6 — FastAPI Kafka Consumer + Claude diff ���석 (QA 승인)**
+- **Issue #6 — FastAPI Kafka Consumer + Claude diff 분석 (QA 승인)**
   - aiokafka Consumer → GitHub diff 조회 → Claude 분석 → CommitAnalysis DB 저장
   - langchain 제거, anthropic SDK 직접 사용 ([ADR-011](decisions/ADR-011-ai-server-deps.md))
   - AES-256-GCM Python 포팅 (Node.js 암호화 호환), Python 3.9 호환 수정

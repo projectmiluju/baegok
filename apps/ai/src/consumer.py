@@ -6,11 +6,12 @@ import json
 import logging
 from datetime import datetime, timezone
 
+import httpx
 from aiokafka import AIOKafkaConsumer
 
 from .config import settings
 from .crypto import decrypt_token
-from .db import get_access_token_for_repo, save_commit_analysis
+from .db import check_analysis_exists, get_access_token_for_repo, save_commit_analysis
 from .services.claude_analyzer import analyze_commit
 from .services.github_client import fetch_commit_diff
 
@@ -56,40 +57,46 @@ async def process_message(data: dict) -> None:
             full_name,
         )
 
-    for commit in commits_to_process:
-        sha: str = commit.get("sha", "")
-        message: str = commit.get("message", "")
-        timestamp_str: str = commit.get("timestamp", "")
+    async with httpx.AsyncClient() as http_client:
+        for commit in commits_to_process:
+            sha: str = commit.get("sha", "")
+            message: str = commit.get("message", "")
+            timestamp_str: str = commit.get("timestamp", "")
 
-        if not sha:
-            continue
+            if not sha:
+                continue
 
-        try:
-            # 1. diff 조회
-            diff = await fetch_commit_diff(access_token, full_name, sha)
+            try:
+                # 0. 중복 체크 — Claude API 호출 전에 확인하여 비용 절약
+                if await check_analysis_exists(repository_id, sha):
+                    logger.info("커밋 %s 이미 분석됨 — 건너뜀 (%s)", sha[:7], full_name)
+                    continue
 
-            # 2. Claude 분석
-            analysis = await analyze_commit(message, diff)
+                # 1. diff 조회
+                diff = await fetch_commit_diff(access_token, full_name, sha, client=http_client)
 
-            # 3. DB 저장
-            committed_at = (
-                datetime.fromisoformat(timestamp_str.replace("Z", "+00:00"))
-                if timestamp_str
-                else datetime.now(timezone.utc)
-            )
-            await save_commit_analysis(
-                repository_id=repository_id,
-                commit_sha=sha,
-                commit_message=message,
-                committed_at=committed_at,
-                diff_summary=analysis["summary"],
-                tags=analysis["tags"],
-            )
-            logger.info("커밋 %s 분석 완료 (%s)", sha[:7], full_name)
+                # 2. Claude 분석
+                analysis = await analyze_commit(message, diff)
 
-        except Exception:
-            logger.exception("커밋 %s 분석 실패 — 건너뜀 (PRD §4: 재시도 없음)", sha[:7])
-            continue
+                # 3. DB 저장
+                committed_at = (
+                    datetime.fromisoformat(timestamp_str.replace("Z", "+00:00"))
+                    if timestamp_str
+                    else datetime.now(timezone.utc)
+                )
+                await save_commit_analysis(
+                    repository_id=repository_id,
+                    commit_sha=sha,
+                    commit_message=message,
+                    committed_at=committed_at,
+                    diff_summary=analysis["summary"],
+                    tags=analysis["tags"],
+                )
+                logger.info("커밋 %s 분석 완료 (%s)", sha[:7], full_name)
+
+            except Exception:
+                logger.exception("커밋 %s 분석 실패 — 건너뜀 (PRD §4: 재시도 없음)", sha[:7])
+                continue
 
 
 async def run_consumer() -> None:
