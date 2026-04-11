@@ -12,6 +12,7 @@ process.env.SESSION_MAX_AGE_SECONDS = "3600";
 process.env.TOKEN_ENCRYPTION_KEY = "a".repeat(64);
 process.env.WEB_BASE_URL = "http://localhost:3000";
 process.env.WEBHOOK_BASE_URL = "https://test.ngrok.io";
+process.env.KAFKA_BROKERS = "localhost:9092";
 
 // --- Prisma mocks ---
 const findUniqueMock = mock(async () => ({
