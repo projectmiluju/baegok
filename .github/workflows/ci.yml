@@ -38,14 +38,17 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Install Python linters
-        run: pip install ruff black
+      - name: Install Python dependencies
+        run: cd apps/ai && pip install -r requirements.txt ruff black
 
       - name: Ruff check
         run: cd apps/ai && ruff check .
 
       - name: Black check
         run: cd apps/ai && black --check .
+
+      - name: Python tests
+        run: cd apps/ai && python -m pytest src/tests/ -v
 
   test:
     runs-on: ubuntu-latest
