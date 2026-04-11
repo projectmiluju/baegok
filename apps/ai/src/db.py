@@ -1,16 +1,25 @@
 from __future__ import annotations
 
 import datetime as _dt
+import enum
 from datetime import datetime, timezone
 from typing import Optional
 from uuid import uuid4
 
-from sqlalchemy import JSON, Date, DateTime, Integer, String, Text, func, text
+from sqlalchemy import JSON, Date, DateTime, Enum, Integer, String, Text, func, select, text
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 from .config import settings
+
+
+class ReportTypeEnum(str, enum.Enum):
+    """PeriodReport.report_type에 대응하는 PostgreSQL enum."""
+
+    WEEKLY_AUTO = "weekly_auto"
+    CUSTOM = "custom"
+
 
 engine = create_async_engine(settings.database_url, echo=False)
 async_session = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
@@ -204,3 +213,105 @@ async def get_access_token_for_repo(repository_id: str) -> Optional[str]:
         )
         row = result.scalar()
         return row if row else None
+
+
+class PeriodReport(Base):
+    """PeriodReport 테이블 — Prisma 스키마와 동일 구조."""
+
+    __tablename__ = "period_reports"
+
+    id: Mapped[str] = mapped_column(String, primary_key=True)
+    user_id: Mapped[str] = mapped_column(String, nullable=False)
+    start_date: Mapped[_dt.date] = mapped_column(Date, nullable=False)
+    end_date: Mapped[_dt.date] = mapped_column(Date, nullable=False)
+    report_type: Mapped[str] = mapped_column(
+        Enum(ReportTypeEnum, name="ReportType", create_type=False), nullable=False
+    )
+    summary: Mapped[dict] = mapped_column(JSON, nullable=False, server_default=text("'{}'::jsonb"))
+    roadmap: Mapped[dict] = mapped_column(JSON, nullable=False, server_default=text("'{}'::jsonb"))
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+    deleted_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+
+
+async def get_all_active_user_ids() -> list[str]:
+    """활성 레포지토리를 가진 모든 사용자 ID를 반환한다."""
+    async with async_session() as session:
+        result = await session.execute(
+            text("SELECT DISTINCT user_id FROM repositories WHERE deleted_at IS NULL"),
+        )
+        return [row[0] for row in result.fetchall()]
+
+
+async def get_daily_summaries_for_period(
+    user_id: str,
+    start_date: _dt.date,
+    end_date: _dt.date,
+) -> list[dict]:
+    """주어진 기간의 DailySummary 행을 조회한다."""
+    async with async_session() as session:
+        result = await session.execute(
+            select(DailySummary)
+            .where(
+                DailySummary.user_id == user_id,
+                DailySummary.date >= start_date,
+                DailySummary.date <= end_date,
+            )
+            .order_by(DailySummary.date.asc())
+        )
+        rows = result.scalars().all()
+        return [
+            {
+                "date": str(row.date),
+                "summary_text": row.summary_text,
+                "commit_count": row.commit_count,
+                "tags": row.tags,
+            }
+            for row in rows
+        ]
+
+
+async def check_period_report_exists(
+    user_id: str,
+    start_date: _dt.date,
+    end_date: _dt.date,
+    report_type: str,
+) -> bool:
+    """해당 기간/타입의 PeriodReport가 이미 존재하는지 확인한다."""
+    async with async_session() as session:
+        result = await session.execute(
+            text(
+                "SELECT 1 FROM period_reports"
+                " WHERE user_id = :uid"
+                " AND start_date = :sd"
+                " AND end_date = :ed"
+                " AND report_type = :rt"
+                " AND deleted_at IS NULL"
+            ),
+            {"uid": user_id, "sd": start_date, "ed": end_date, "rt": report_type},
+        )
+        return result.scalar() is not None
+
+
+async def save_period_report(
+    user_id: str,
+    start_date: _dt.date,
+    end_date: _dt.date,
+    report_type: str,
+    summary: dict,
+    roadmap: dict,
+) -> None:
+    """PeriodReport를 DB에 저장한다. 중복 체크는 check_period_report_exists()에서 수행."""
+    async with async_session() as session:
+        record = PeriodReport(
+            id=str(uuid4()),
+            user_id=user_id,
+            start_date=start_date,
+            end_date=end_date,
+            report_type=ReportTypeEnum(report_type),
+            summary=summary,
+            roadmap=roadmap,
+        )
+        session.add(record)
+        await session.commit()
