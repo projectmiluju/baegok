@@ -18,6 +18,11 @@ class Settings(BaseSettings):
     # Token encryption (Node.js API와 동일 키 — access_token 복호화용)
     token_encryption_key: str = ""
 
+    # Celery
+    celery_broker_url: str = "redis://localhost:6379/0"
+    celery_result_backend: str = "redis://localhost:6379/0"
+    celery_timezone: str = "Asia/Seoul"
+
     model_config = {"env_file": ".env", "extra": "ignore"}
 
 
