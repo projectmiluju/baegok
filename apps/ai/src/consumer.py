@@ -11,8 +11,14 @@ from aiokafka import AIOKafkaConsumer
 
 from .config import settings
 from .crypto import decrypt_token
-from .db import check_analysis_exists, get_access_token_for_repo, save_commit_analysis
+from .db import (
+    check_analysis_exists,
+    get_access_token_for_repo,
+    get_user_id_for_repo,
+    save_commit_analysis,
+)
 from .services.claude_analyzer import analyze_commit
+from .services.daily_summary import generate_daily_summary
 from .services.github_client import fetch_commit_diff
 
 logger = logging.getLogger(__name__)
@@ -97,6 +103,20 @@ async def process_message(data: dict) -> None:
             except Exception:
                 logger.exception("커밋 %s 분석 실패 — 건너뜀 (PRD §4: 재시도 없음)", sha[:7])
                 continue
+
+    # 커밋 처리 완료 후 일일 요약 생성
+    try:
+        user_id = await get_user_id_for_repo(repository_id)
+        if user_id and commits_to_process:
+            # 첫 커밋의 timestamp에서 날짜 추출
+            first_ts = commits_to_process[0].get("timestamp", "")
+            if first_ts:
+                commit_date = datetime.fromisoformat(first_ts.replace("Z", "+00:00")).date()
+            else:
+                commit_date = datetime.now(timezone.utc).date()
+            await generate_daily_summary(user_id, commit_date)
+    except Exception:
+        logger.exception("일일 요약 생성 실패 (repo: %s)", full_name)
 
 
 async def run_consumer() -> None:

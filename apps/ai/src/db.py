@@ -96,6 +96,97 @@ async def save_commit_analysis(
         await session.commit()
 
 
+class DailySummary(Base):
+    """DailySummary 테이블 — Prisma 스키마와 동일 구조."""
+
+    __tablename__ = "daily_summaries"
+
+    id: Mapped[str] = mapped_column(String, primary_key=True)
+    user_id: Mapped[str] = mapped_column(String, nullable=False)
+    date: Mapped[datetime] = mapped_column(DateTime, nullable=False)
+    summary_text: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    commit_count: Mapped[int] = mapped_column(Integer, nullable=False, server_default=text("0"))
+    tags: Mapped[list] = mapped_column(JSON, nullable=False, server_default=text("'[]'::jsonb"))
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+
+
+async def upsert_daily_summary(
+    user_id: str,
+    date: datetime,
+    summary_text: str,
+    commit_count: int,
+    tags: list[str],
+) -> None:
+    """DailySummary를 upsert한다. (user_id, date) 기준 ON CONFLICT DO UPDATE."""
+    async with async_session() as session:
+        stmt = (
+            pg_insert(DailySummary)
+            .values(
+                id=str(uuid4()),
+                user_id=user_id,
+                date=date,
+                summary_text=summary_text,
+                commit_count=commit_count,
+                tags=tags,
+            )
+            .on_conflict_do_update(
+                index_elements=["user_id", "date"],
+                set_={
+                    "summary_text": summary_text,
+                    "commit_count": commit_count,
+                    "tags": tags,
+                    "updated_at": func.now(),
+                },
+            )
+        )
+        await session.execute(stmt)
+        await session.commit()
+
+
+async def get_commit_analyses_for_date(user_id: str, date: datetime) -> list[dict]:
+    """주어진 사용자의 특정 날짜 커밋 분석 결과를 조회한다."""
+    async with async_session() as session:
+        result = await session.execute(
+            text(
+                "SELECT ca.commit_sha, ca.commit_message,"
+                " ca.diff_summary, ca.tags, ca.committed_at"
+                " FROM commit_analyses ca"
+                " JOIN repositories r ON ca.repository_id = r.id"
+                " WHERE r.user_id = :uid"
+                " AND ca.committed_at::date = :d"
+                " AND ca.deleted_at IS NULL"
+            ),
+            {"uid": user_id, "d": date},
+        )
+        rows = result.fetchall()
+        return [
+            {
+                "commit_sha": row[0],
+                "commit_message": row[1],
+                "diff_summary": row[2],
+                "tags": row[3],
+                "committed_at": row[4],
+            }
+            for row in rows
+        ]
+
+
+async def get_user_id_for_repo(repository_id: str) -> str | None:
+    """Repository에서 user_id를 조회한다."""
+    async with async_session() as session:
+        result = await session.execute(
+            text("SELECT user_id FROM repositories WHERE id = :rid AND deleted_at IS NULL"),
+            {"rid": repository_id},
+        )
+        row = result.scalar()
+        return row if row else None
+
+
 async def get_access_token_for_repo(repository_id: str) -> str | None:
     """Repository → User join으로 암호화된 access_token을 조회한다."""
     async with async_session() as session:

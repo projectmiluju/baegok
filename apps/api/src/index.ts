@@ -3,6 +3,7 @@ import { cors } from "hono/cors";
 import { logger } from "hono/logger";
 import { authRoute } from "@/routes/auth";
 import { repositoryRoute } from "@/routes/repositories";
+import { summaryRoute } from "@/routes/summaries";
 import { webhookRoute } from "@/routes/webhooks";
 
 const app = new Hono();
@@ -22,6 +23,7 @@ app.get("/health", (c) => {
 
 app.route("/api/auth", authRoute);
 app.route("/api/repositories", repositoryRoute);
+app.route("/api/summaries", summaryRoute);
 app.route("/api/webhooks", webhookRoute);
 
 export { app };
