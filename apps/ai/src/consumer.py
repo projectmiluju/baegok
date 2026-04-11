@@ -11,8 +11,14 @@ from aiokafka import AIOKafkaConsumer
 
 from .config import settings
 from .crypto import decrypt_token
-from .db import check_analysis_exists, get_access_token_for_repo, save_commit_analysis
+from .db import (
+    check_analysis_exists,
+    get_access_token_for_repo,
+    get_user_id_for_repo,
+    save_commit_analysis,
+)
 from .services.claude_analyzer import analyze_commit
+from .services.daily_summary import generate_daily_summary
 from .services.github_client import fetch_commit_diff
 
 logger = logging.getLogger(__name__)
@@ -97,6 +103,24 @@ async def process_message(data: dict) -> None:
             except Exception:
                 logger.exception("커밋 %s 분석 실패 — 건너뜀 (PRD §4: 재시도 없음)", sha[:7])
                 continue
+
+    # 커밋 처리 완료 후 일일 요약 생성 (커밋이 여러 날짜에 걸칠 수 있으므로 모든 날짜에 대해 생성)
+    try:
+        user_id = await get_user_id_for_repo(repository_id)
+        if user_id and commits_to_process:
+            distinct_dates: set[str] = set()
+            for commit in commits_to_process:
+                ts = commit.get("timestamp", "")
+                if ts:
+                    commit_date = datetime.fromisoformat(ts.replace("Z", "+00:00")).date()
+                else:
+                    commit_date = datetime.now(timezone.utc).date()
+                distinct_dates.add(commit_date.isoformat())
+            for date_str in distinct_dates:
+                d = datetime.fromisoformat(date_str).date()
+                await generate_daily_summary(user_id, d)
+    except Exception:
+        logger.exception("일일 요약 생성 실패 (repo: %s)", full_name)
 
 
 async def run_consumer() -> None:

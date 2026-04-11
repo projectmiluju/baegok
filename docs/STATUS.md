@@ -6,7 +6,12 @@
 
 ## 최근 변경
 
-- **Issue #6 — FastAPI Kafka Consumer + Claude diff 분석 (QA 승인)**
+- **Issue #7 — 일일 학습 요약 자동 생성 + 조회 API (QA 승인)**
+  - AI 서버: CommitAnalysis 저장 후 DailySummary upsert (Claude 통합 요약 + 태그 병합)
+  - Node.js API: `GET /api/summaries/daily?date=` + `GET /api/summaries/daily/:id`
+  - 빈 날짜: "오늘은 커밋 기록이 없습니다" (PRD §4)
+  - 테스트 11종 (Node.js 8 + Python 3)
+- **Issue #6 — FastAPI Kafka Consumer + Claude diff 분석 (머지 완료)**
   - aiokafka Consumer → GitHub diff 조회 → Claude 분석 → CommitAnalysis DB 저장
   - langchain 제거, anthropic SDK 직접 사용 ([ADR-011](decisions/ADR-011-ai-server-deps.md))
   - AES-256-GCM Python 포팅 (Node.js 암호화 호환), Python 3.9 호환 수정
@@ -67,7 +72,9 @@
 - [x] 레포 연결 + Webhook 자동 등록 (#4, QA 승인)
 - [x] Webhook 수신 → Kafka 발행 (#5, QA 승인)
 - [x] FastAPI Kafka Consumer + Claude 분석 (#6, QA 승인)
-- [ ] 일일 요약 / 기간 리포트 / 로드맵 API (#7~#9)
+- [x] 일일 학습 요약 (#7, QA 승인)
+- [ ] 기간 리포트 + 학습 로드맵 (#8)
+- [ ] Celery Beat 주간 자동 리포트 (#9)
 - [ ] 대시보드 UI (#10)
 - [ ] MCP 서버 (#11)
 - [ ] AWS 배포 (#12)
