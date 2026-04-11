@@ -6,7 +6,12 @@
 
 ## 최근 변경
 
-- **Issue #4 — 레포 연결 + GitHub Webhook 자동 등록 (QA 승인)**
+- **Issue #5 — GitHub Webhook 수신 → Kafka 발행 (QA 승인)**
+  - `POST /api/webhooks/github` — push 이벤트 수신, HMAC SHA-256 서명 검증, Kafka 발행
+  - fire-and-forget 패턴으로 즉시 200 응답 (Webhook 타임아웃 회피)
+  - kafkajs 의존성 추가, Kafka Producer 싱글톤 모듈
+  - 9개 자동화 테스트 (서명 누락/불일치, 미등록 레포, Kafka 실패 복원력, 빈 commits 등)
+- **Issue #4 — 레포 연결 + GitHub Webhook 자동 등록 (머지 완료)**
   - `GET /api/repositories/github`, `GET/POST /api/repositories`, `DELETE /api/repositories/:id`
   - GitHub Webhook push 이벤트 자동 등록, webhook secret AES-256-GCM 암호화 저장
   - soft-delete 재연결 시 unique constraint 충돌 버그 발견·수정 (QA 단계)
@@ -54,7 +59,7 @@
 - [x] 협업 환경 풀세팅 (린트, 훅, CI/CD)
 - [x] GitHub OAuth 로그인 (#3, QA 승인)
 - [x] 레포 연결 + Webhook 자동 등록 (#4, QA 승인)
-- [ ] Webhook 수신 → Kafka 발행 (#5)
+- [x] Webhook 수신 → Kafka 발행 (#5, QA 승인)
 - [ ] FastAPI Kafka Consumer + Claude 분석 (#6)
 - [ ] 일일 요약 / 기간 리포트 / 로드맵 API (#7~#9)
 - [ ] 대시보드 UI (#10)
