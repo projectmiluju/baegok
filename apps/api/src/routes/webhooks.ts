@@ -101,7 +101,7 @@ webhookRoute.post("/github", async (c) => {
       }),
     )
     .catch((error) => {
-      console.error("[webhooks] Kafka 발행 실패 (다음 push에서 누적 처리)", error);
+      console.error("[webhooks] Kafka 발행 실패 — 이 메시지는 유실됨 (재시도 없음)", error);
     });
 
   return c.json({ message: "accepted" }, 200);
