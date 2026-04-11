@@ -35,6 +35,9 @@ const envSchema = z.object({
 
   // Kafka
   KAFKA_BROKERS: z.string().min(1).default("localhost:9092"),
+
+  // AI Server
+  AI_API_URL: z.string().url().default("http://localhost:8000"),
 });
 
 export type Env = z.infer<typeof envSchema>;
