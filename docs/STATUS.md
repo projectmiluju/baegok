@@ -6,7 +6,13 @@
 
 ## 최근 변경
 
-- **Issue #5 — GitHub Webhook 수신 → Kafka 발행 (QA 승인)**
+- **Issue #6 — FastAPI Kafka Consumer + Claude diff ���석 (QA 승인)**
+  - aiokafka Consumer → GitHub diff 조회 → Claude 분석 → CommitAnalysis DB 저장
+  - langchain 제거, anthropic SDK 직접 사용 ([ADR-011](decisions/ADR-011-ai-server-deps.md))
+  - AES-256-GCM Python 포팅 (Node.js 암호화 호환), Python 3.9 호환 수정
+  - 10개 자동화 테스트 (로컬 통과 확인)
+  - 자세한 내용: [Dev Log](devlog/2026-04-12-issue-6-kafka-consumer-claude.md)
+- **Issue #5 — GitHub Webhook 수신 → Kafka 발행 (머지 완료)**
   - `POST /api/webhooks/github` — push 이벤트 수신, HMAC SHA-256 서명 검증, Kafka 발행
   - fire-and-forget 패턴으로 즉시 200 응답 (Webhook 타임아웃 회피)
   - kafkajs 의존성 추가, Kafka Producer 싱글톤 모듈
@@ -60,7 +66,7 @@
 - [x] GitHub OAuth 로그인 (#3, QA 승인)
 - [x] 레포 연결 + Webhook 자동 등록 (#4, QA 승인)
 - [x] Webhook 수신 → Kafka 발행 (#5, QA 승인)
-- [ ] FastAPI Kafka Consumer + Claude 분석 (#6)
+- [x] FastAPI Kafka Consumer + Claude 분석 (#6, QA 승인)
 - [ ] 일일 요약 / 기간 리포트 / 로드맵 API (#7~#9)
 - [ ] 대시보드 UI (#10)
 - [ ] MCP 서버 (#11)
