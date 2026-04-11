@@ -41,6 +41,10 @@ reportRoute.post("/", async (c) => {
 
   const parsed = createReportSchema.safeParse(rawBody);
   if (!parsed.success) {
+    const fieldErrors = parsed.error.flatten().fieldErrors;
+    if (fieldErrors.reportType) {
+      return c.json({ error: TEXT.invalidReportType }, 400);
+    }
     return c.json({ error: TEXT.invalidDates }, 400);
   }
 
@@ -51,6 +55,10 @@ reportRoute.post("/", async (c) => {
 
   if (Number.isNaN(startDateObj.getTime()) || Number.isNaN(endDateObj.getTime())) {
     return c.json({ error: TEXT.invalidDates }, 400);
+  }
+
+  if (startDateObj > endDateObj) {
+    return c.json({ error: "startDate는 endDate보다 이전이어야 합니다" }, 400);
   }
 
   try {
@@ -76,26 +84,36 @@ reportRoute.post("/", async (c) => {
 
     const env = getEnv();
 
-    // AI 서버에 리포트 생성 요청
-    const aiResponse = await fetch(`${env.AI_API_URL}/ai/generate-report`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        summaries: summariesForAi,
-        start_date: startDate,
-        end_date: endDate,
-      }),
-    });
+    // AI 서버에 리포트 생성 요청 (30초 타임아웃)
+    let aiResponse: Response;
+    try {
+      aiResponse = await fetch(`${env.AI_API_URL}/ai/generate-report`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          summaries: summariesForAi,
+          start_date: startDate,
+          end_date: endDate,
+        }),
+        signal: AbortSignal.timeout(30_000),
+      });
+    } catch (fetchError) {
+      console.error("[reports] AI 서버 연결 실패/타임아웃:", fetchError);
+      return c.json({ error: TEXT.aiServerError }, 502);
+    }
 
     if (!aiResponse.ok) {
       console.error("[reports] AI 서버 응답 오류:", aiResponse.status);
       return c.json({ error: TEXT.aiServerError }, 502);
     }
 
-    const aiResult = (await aiResponse.json()) as {
-      summary: Record<string, unknown>;
-      roadmap: Record<string, unknown>;
-    };
+    let aiResult: { summary: Record<string, unknown>; roadmap: Record<string, unknown> };
+    try {
+      aiResult = (await aiResponse.json()) as typeof aiResult;
+    } catch {
+      console.error("[reports] AI 서버 응답 JSON 파싱 실패");
+      return c.json({ error: TEXT.aiServerError }, 502);
+    }
 
     // PeriodReport 저장
     const reportTypeValue = reportType === "weekly_auto" ? "WEEKLY_AUTO" : "CUSTOM";
