@@ -95,7 +95,7 @@ DATABASE_URL=postgresql://baegok:baegok@localhost:5432/baegok
 REDIS_URL=redis://localhost:6379
 
 # Kafka
-KAFKA_BOOTSTRAP_SERVERS=localhost:9092
+KAFKA_BROKERS=localhost:9092
 
 # AI
 ANTHROPIC_API_KEY=

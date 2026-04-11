@@ -32,6 +32,9 @@ const envSchema = z.object({
 
   // Webhook 콜백을 받을 베이스 URL (개발: ngrok 등, 운영: 실제 도메인)
   WEBHOOK_BASE_URL: z.string().url(),
+
+  // Kafka
+  KAFKA_BROKERS: z.string().min(1).default("localhost:9092"),
 });
 
 export type Env = z.infer<typeof envSchema>;
