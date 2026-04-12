@@ -8,7 +8,7 @@ import { registerRoadmapTool } from "./tools/roadmap.js";
 
 const server = new McpServer({
   name: "baegok-mcp",
-  version: "0.1.0",
+  version: "0.0.0",
 });
 
 registerDailySummaryTool(server);

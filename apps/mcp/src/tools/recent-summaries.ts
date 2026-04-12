@@ -3,9 +3,17 @@ import { z } from "zod";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { apiCall } from "../api-client.js";
 
-interface DailySummary {
+interface DailySummaryResponse {
+  summary: {
+    summaryText: string;
+    commitCount: number;
+    tags: string[];
+  };
+}
+
+interface ParsedSummary {
   date: string;
-  summary: string;
+  summaryText: string;
   commitCount: number;
   tags: string[];
 }
@@ -17,7 +25,7 @@ function formatDate(d: Date): string {
   return `${yyyy}-${mm}-${dd}`;
 }
 
-function formatSummaries(summaries: DailySummary[]): string {
+function formatSummaries(summaries: ParsedSummary[]): string {
   if (summaries.length === 0) {
     return "조회된 학습 요약이 없습니다.";
   }
@@ -27,7 +35,7 @@ function formatSummaries(summaries: DailySummary[]): string {
   for (const s of summaries) {
     const tags = s.tags.length > 0 ? s.tags.join(", ") : "없음";
     lines.push(`\n📅 ${s.date} — 커밋 ${s.commitCount}건 · ${tags}`);
-    lines.push(s.summary);
+    lines.push(s.summaryText);
   }
 
   return lines.join("\n");
@@ -38,24 +46,34 @@ export function registerRecentSummariesTool(server: McpServer): void {
     "list_recent_summaries",
     "최근 N일간의 학습 요약 목록을 조회합니다",
     {
-      days: z.number().optional().describe("조회할 일수 (기본값: 7)"),
+      days: z.number().int().min(1).max(30).default(7).describe("조회할 일수 (1~30, 기본값: 7)"),
     },
     async ({ days }) => {
-      const count = days ?? 7;
+      const count = days;
       const today = new Date();
-      const summaries: DailySummary[] = [];
+      const summaries: ParsedSummary[] = [];
 
       for (let i = 0; i < count; i++) {
         const d = new Date(today);
         d.setDate(d.getDate() - i);
         const dateStr = formatDate(d);
         try {
-          const data = await apiCall<DailySummary>(
+          const { summary } = await apiCall<DailySummaryResponse>(
             `/api/summaries/daily?date=${encodeURIComponent(dateStr)}`,
           );
-          summaries.push(data);
-        } catch {
-          // 해당 날짜에 요약이 없는 경우 건너뜀
+          if (summary.commitCount > 0) {
+            summaries.push({
+              date: dateStr,
+              summaryText: summary.summaryText,
+              commitCount: summary.commitCount,
+              tags: summary.tags,
+            });
+          }
+        } catch (error) {
+          if (error instanceof Error && error.message.includes("401")) {
+            throw error;
+          }
+          // 개별 날짜 조회 실패는 건너뜀 (네트워크 일시 오류 등)
         }
       }
 

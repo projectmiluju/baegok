@@ -3,29 +3,35 @@ import { z } from "zod";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { apiCall } from "../api-client.js";
 
-interface ReportDetail {
-  id: string;
-  roadmap: {
-    recommendedTopics: string[];
-    reasoning: string;
-    nextSteps: string[];
+interface ReportResponse {
+  report: {
+    id: string;
+    roadmap: {
+      recommended_topics?: string[];
+      reasoning?: string;
+      next_steps?: string[];
+    };
   };
 }
 
-function formatRoadmap(data: ReportDetail): string {
-  const { roadmap } = data;
+function formatRoadmap(report: ReportResponse["report"]): string {
+  const { roadmap } = report;
+  const topics = roadmap.recommended_topics ?? [];
+  const reasoning = roadmap.reasoning ?? "";
+  const nextSteps = roadmap.next_steps ?? [];
+
   const lines = [
-    `🗺️ 학습 로드맵 (리포트 ${data.id})`,
+    `🗺️ 학습 로드맵 (리포트 ${report.id})`,
     "━━━━━━━━━━━━━━━━━━━━",
     "",
     `📚 추천 학습 주제`,
-    ...roadmap.recommendedTopics.map((t) => `  • ${t}`),
+    ...(topics.length > 0 ? topics.map((t) => `  • ${t}`) : ["  (없음)"]),
     "",
     `💡 추천 이유`,
-    roadmap.reasoning,
+    reasoning || "(없음)",
     "",
     `👣 다음 단계`,
-    ...roadmap.nextSteps.map((s) => `  • ${s}`),
+    ...(nextSteps.length > 0 ? nextSteps.map((s) => `  • ${s}`) : ["  (없음)"]),
   ];
 
   return lines.join("\n");
@@ -39,9 +45,11 @@ export function registerRoadmapTool(server: McpServer): void {
       reportId: z.string().describe("리포트 ID"),
     },
     async ({ reportId }) => {
-      const data = await apiCall<ReportDetail>(`/api/reports/${encodeURIComponent(reportId)}`);
+      const { report } = await apiCall<ReportResponse>(
+        `/api/reports/${encodeURIComponent(reportId)}`,
+      );
       return {
-        content: [{ type: "text" as const, text: formatRoadmap(data) }],
+        content: [{ type: "text" as const, text: formatRoadmap(report) }],
       };
     },
   );

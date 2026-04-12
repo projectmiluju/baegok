@@ -28,7 +28,7 @@ describe("API 클라이언트", () => {
     delete process.env["BAEGOK_API_TOKEN"];
 
     const { apiCall } = await import("../api-client");
-    expect(apiCall("/test")).rejects.toThrow("BAEGOK_API_TOKEN");
+    await expect(apiCall("/test")).rejects.toThrow("BAEGOK_API_TOKEN");
 
     if (originalToken) {
       process.env["BAEGOK_API_TOKEN"] = originalToken;

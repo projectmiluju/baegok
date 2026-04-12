@@ -3,38 +3,49 @@ import { z } from "zod";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { apiCall } from "../api-client.js";
 
-interface PeriodReport {
-  id: string;
-  startDate: string;
-  endDate: string;
-  strengths: string[];
-  weaknesses: string[];
-  stats: {
-    totalCommits: number;
-    activeDays: number;
-    topTags: string[];
+const DATE_REGEX = /^\d{4}-\d{2}-\d{2}$/;
+
+interface ReportResponse {
+  report: {
+    id: string;
+    startDate: string;
+    endDate: string;
+    summary: {
+      strengths: string[];
+      weaknesses: string[];
+      stats: {
+        totalCommits: number;
+        activeDays: number;
+        topTags: string[];
+      };
+    };
+    roadmap: {
+      recommended_topics: string[];
+      reasoning: string;
+      next_steps: string[];
+    };
   };
-  roadmap: string;
 }
 
-function formatReport(data: PeriodReport): string {
+function formatReport(report: ReportResponse["report"]): string {
+  const { summary, roadmap } = report;
   const lines = [
-    `📊 학습 리포트 (${data.startDate} ~ ${data.endDate})`,
+    `📊 학습 리포트 (${report.startDate} ~ ${report.endDate})`,
     "━━━━━━━━━━━━━━━━━━━━",
     "",
     `📈 통계`,
-    `  총 커밋: ${data.stats.totalCommits}건`,
-    `  활동일: ${data.stats.activeDays}일`,
-    `  주요 태그: ${data.stats.topTags.join(", ") || "없음"}`,
+    `  총 커밋: ${summary.stats.totalCommits}건`,
+    `  활동일: ${summary.stats.activeDays}일`,
+    `  주요 태그: ${summary.stats.topTags.join(", ") || "없음"}`,
     "",
     `💪 강점`,
-    ...data.strengths.map((s) => `  • ${s}`),
+    ...summary.strengths.map((s) => `  • ${s}`),
     "",
     `🔧 개선점`,
-    ...data.weaknesses.map((w) => `  • ${w}`),
+    ...summary.weaknesses.map((w) => `  • ${w}`),
     "",
     `🗺️ 로드맵`,
-    data.roadmap,
+    ...(roadmap.recommended_topics ?? []).map((t) => `  • ${t}`),
   ];
 
   return lines.join("\n");
@@ -45,11 +56,17 @@ export function registerPeriodReportTool(server: McpServer): void {
     "get_period_report",
     "기간별 학습 리포트를 생성합니다",
     {
-      startDate: z.string().describe("시작 날짜 (YYYY-MM-DD 형식)"),
-      endDate: z.string().describe("종료 날짜 (YYYY-MM-DD 형식)"),
+      startDate: z
+        .string()
+        .regex(DATE_REGEX, "YYYY-MM-DD 형식이어야 합니다")
+        .describe("시작 날짜 (YYYY-MM-DD 형식)"),
+      endDate: z
+        .string()
+        .regex(DATE_REGEX, "YYYY-MM-DD 형식이어야 합니다")
+        .describe("종료 날짜 (YYYY-MM-DD 형식)"),
     },
     async ({ startDate, endDate }) => {
-      const data = await apiCall<PeriodReport>("/api/reports", {
+      const { report } = await apiCall<ReportResponse>("/api/reports", {
         method: "POST",
         body: JSON.stringify({
           startDate,
@@ -58,7 +75,7 @@ export function registerPeriodReportTool(server: McpServer): void {
         }),
       });
       return {
-        content: [{ type: "text" as const, text: formatReport(data) }],
+        content: [{ type: "text" as const, text: formatReport(report) }],
       };
     },
   );

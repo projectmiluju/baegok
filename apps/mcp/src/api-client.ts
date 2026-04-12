@@ -25,7 +25,8 @@ export async function apiCall<T>(path: string, options?: RequestInit): Promise<T
     let detail = "";
     try {
       const body = (await response.json()) as Record<string, unknown>;
-      detail = typeof body["message"] === "string" ? `: ${body["message"]}` : "";
+      const msg = body["error"] ?? body["message"];
+      detail = typeof msg === "string" ? `: ${msg}` : "";
     } catch {
       // body가 JSON이 아닌 경우 무시
     }
