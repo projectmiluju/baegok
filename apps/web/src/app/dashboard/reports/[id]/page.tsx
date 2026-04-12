@@ -227,7 +227,7 @@ export default function ReportDetailPage() {
           <h2 className="text-lg font-semibold mb-4">{TEXT.roadmap}</h2>
 
           {/* Recommended Topics */}
-          {report.roadmap.recommendedTopics.length > 0 && (
+          {(report.roadmap.recommended_topics ?? []).length > 0 && (
             <div className="mb-4">
               <h3
                 className="text-sm font-medium mb-2"
@@ -236,7 +236,7 @@ export default function ReportDetailPage() {
                 {TEXT.recommendedTopics}
               </h3>
               <div className="flex flex-wrap gap-1.5">
-                {report.roadmap.recommendedTopics.map((topic) => (
+                {report.roadmap.recommended_topics.map((topic) => (
                   <TagChip key={topic} label={topic} />
                 ))}
               </div>
@@ -257,7 +257,7 @@ export default function ReportDetailPage() {
           )}
 
           {/* Next Steps */}
-          {report.roadmap.nextSteps.length > 0 && (
+          {(report.roadmap.next_steps ?? []).length > 0 && (
             <div>
               <h3
                 className="text-sm font-medium mb-2"
@@ -266,7 +266,7 @@ export default function ReportDetailPage() {
                 {TEXT.nextSteps}
               </h3>
               <ol className="space-y-2 list-none pl-0">
-                {report.roadmap.nextSteps.map((step, i) => (
+                {report.roadmap.next_steps.map((step, i) => (
                   <li key={i} className="flex items-start gap-3 text-base leading-relaxed">
                     <span
                       className="flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-xs font-semibold text-white"
