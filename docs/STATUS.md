@@ -1,11 +1,18 @@
 # 프로젝트 현황
 
-**최종 업데이트:** 2026-04-10
+**최종 업데이트:** 2026-04-13
 **현재 버전:** v0.1.0 (예정 — Issue #3 머지 시점)
 **배포 URL:** 미정
 
 ## 최근 변경
 
+- **Issue #11 — MCP 서버 (QA 승인)**
+  - @modelcontextprotocol/sdk 기반 stdio 트랜스포트 MCP 서버
+  - 4개 도구: `get_daily_summary`, `list_recent_summaries`, `get_period_report`, `get_roadmap`
+  - JWT Bearer 인증 API 클라이언트, 한글 포맷 출력
+  - PR 리뷰에서 API 응답 엔벨로프 미언랩 P0 5건 발견 → 수정 완료
+  - 프론트엔드 roadmap snake_case 불일치 런타임 에러 발견 → 수정 완료
+  - 5개 테스트
 - **Issue #10 — 대시보드 UI (QA 승인)**
   - Next.js 16 프론트엔드: 랜딩/OAuth 콜백/대시보드/레포 관리/리포트 목록·상세 (7 라우트)
   - Notion 스타일 디자인 시스템 (Growth Teal + Warm Neutrals)
@@ -69,6 +76,7 @@
 | Branch protection rules 미설정           | P1     | push 후 GitHub 웹에서 설정 |
 | JWT refresh token 없음 — 7일 후 재로그인 | P2     | MVP1 수용, v2에서 검토     |
 | OAuth 키 로테이션 절차 미정의            | P2     | 운영(#12) 단계에서 결정    |
+| README에 MCP 등록 방법 미문서화          | P2     | #12 배포 시 함께 작성      |
 
 ## 기술 부채
 
