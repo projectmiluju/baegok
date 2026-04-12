@@ -38,9 +38,9 @@ export interface ReportSummary {
 }
 
 export interface ReportRoadmap {
-  recommendedTopics: string[];
+  recommended_topics: string[];
   reasoning: string;
-  nextSteps: string[];
+  next_steps: string[];
 }
 
 export interface Report {
