@@ -6,7 +6,12 @@
 
 ## 최근 변경
 
-- **Issue #9 — Celery Beat 주간 자동 리포트 (QA 승인)**
+- **Issue #10 — 대시보드 UI (QA 승인)**
+  - Next.js 16 프론트엔드: 랜딩/OAuth 콜백/대시보드/레포 관리/리포트 목록·상세 (7 라우트)
+  - Notion 스타일 디자인 시스템 (Growth Teal + Warm Neutrals)
+  - 8개 컴포넌트 (StatCard, DailySummaryCard, RepoCard, ReportCard, EmptyState 등)
+  - Zustand 인증 상태 + AuthGuard + `word-break: keep-all` + 반응형
+- **Issue #9 — Celery Beat 주간 자동 리포트 (머지 완료)**
   - Celery + Redis 통합, Beat 스케줄 매주 월요일 09:00 KST
   - 활성 User 순회 → 직전 7일 PeriodReport 자동 생성 (중복 skip, 실패 격리)
   - docker-compose celery 서비스는 #12 (배포)로 이관
@@ -85,7 +90,7 @@
 - [x] 일일 학습 요약 (#7, QA 승인)
 - [x] 기간 리포트 + 학습 로드맵 (#8, QA 승인)
 - [x] Celery Beat 주간 자동 리포트 (#9, QA 승인)
-- [ ] 대시보드 UI (#10)
+- [x] 대시보드 UI (#10, QA 승인)
 - [ ] MCP 서버 (#11)
 - [ ] AWS 배포 (#12)
 - [ ] AI 활용 리포트 + 최종 제출 (#13)
