@@ -26,8 +26,8 @@
 @theme inline {
   --color-background: var(--color-bg);
   --color-foreground: var(--color-text);
-  --color-cta: var(--color-cta);
-  --color-cta-hover: var(--color-cta-hover);
+  --color-cta: #2a9d99;
+  --color-cta-hover: #1e7a77;
   --font-sans: "Inter", "Pretendard", -apple-system, system-ui, sans-serif;
 }
 

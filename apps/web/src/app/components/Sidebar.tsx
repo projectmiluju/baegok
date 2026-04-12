@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { LayoutDashboard, GitFork, FileText, LogOut, Menu, X } from "lucide-react";
 import { useAuthStore } from "../lib/auth-store";
+import { apiFetch } from "../lib/api";
 
 const TEXT = {
   logo: "배곡",
@@ -25,9 +26,13 @@ export function Sidebar() {
   const { user, clearAuth } = useAuthStore();
   const [mobileOpen, setMobileOpen] = useState(false);
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    try {
+      await apiFetch("/api/auth/logout", { method: "POST" });
+    } catch {
+      // ignore logout errors
+    }
     clearAuth();
-    document.cookie = "baegok_session=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
     window.location.href = "/";
   };
 

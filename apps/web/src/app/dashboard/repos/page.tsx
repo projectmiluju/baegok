@@ -5,7 +5,7 @@ import { GitFork, Plus, X } from "lucide-react";
 import { apiFetch } from "../../lib/api";
 import { RepoCard } from "../../components/RepoCard";
 import { EmptyState } from "../../components/EmptyState";
-import type { Repository, GithubRepository } from "../../lib/types";
+import type { Repository, GithubRepository, GithubRepoRaw } from "../../lib/types";
 
 const TEXT = {
   title: "레포 관리",
@@ -33,8 +33,8 @@ export default function ReposPage() {
     setIsLoading(true);
     setError(null);
     try {
-      const data = await apiFetch<Repository[]>("/api/repositories");
-      setRepos(data);
+      const data = await apiFetch<{ repositories: Repository[] }>("/api/repositories");
+      setRepos(data.repositories);
     } catch {
       setError(TEXT.error);
     } finally {
@@ -50,8 +50,15 @@ export default function ReposPage() {
     setIsModalOpen(true);
     setIsModalLoading(true);
     try {
-      const data = await apiFetch<GithubRepository[]>("/api/repositories/github");
-      setGithubRepos(data);
+      const data = await apiFetch<{ repos: GithubRepoRaw[] }>("/api/repositories/github");
+      setGithubRepos(
+        data.repos.map((r) => ({
+          id: r.id,
+          fullName: r.full_name,
+          description: r.description ?? null,
+          isPrivate: r.private,
+        })),
+      );
     } catch {
       setGithubRepos([]);
     } finally {
@@ -64,7 +71,7 @@ export default function ReposPage() {
     try {
       await apiFetch<Repository>("/api/repositories", {
         method: "POST",
-        body: JSON.stringify({ fullName }),
+        body: JSON.stringify({ githubRepoId, fullName }),
       });
       setIsModalOpen(false);
       await fetchRepos();

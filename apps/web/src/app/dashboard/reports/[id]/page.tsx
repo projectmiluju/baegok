@@ -39,8 +39,8 @@ export default function ReportDetailPage() {
     setIsLoading(true);
     setError(null);
     try {
-      const data = await apiFetch<Report>(`/api/reports/${reportId}`);
-      setReport(data);
+      const data = await apiFetch<{ report: Report }>(`/api/reports/${reportId}`);
+      setReport(data.report);
     } catch {
       setError(TEXT.error);
     } finally {
@@ -86,7 +86,7 @@ export default function ReportDetailPage() {
     );
   }
 
-  const typeLabel = report.reportType === "weekly_auto" ? TEXT.weeklyAuto : TEXT.custom;
+  const typeLabel = report.reportType === "WEEKLY_AUTO" ? TEXT.weeklyAuto : TEXT.custom;
 
   return (
     <div>

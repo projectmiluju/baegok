@@ -21,10 +21,10 @@ export const useAuthStore = create<AuthState>((set) => ({
   clearAuth: () => set({ user: null, isAuthenticated: false, isLoading: false }),
   checkAuth: async () => {
     try {
-      const user = await apiFetch<User>("/api/auth/me", {
+      const data = await apiFetch<{ user: User }>("/api/auth/me", {
         skipRedirect: true,
       });
-      set({ user, isAuthenticated: true, isLoading: false });
+      set({ user: data.user, isAuthenticated: true, isLoading: false });
     } catch {
       set({ user: null, isAuthenticated: false, isLoading: false });
     }

@@ -32,7 +32,8 @@ export async function apiFetch<T>(path: string, options: FetchOptions = {}): Pro
     const errorBody = await response.json().catch(() => ({
       message: "요청 처리 중 오류가 발생했습니다",
     }));
-    throw new Error((errorBody as { message?: string }).message || `HTTP ${response.status}`);
+    const errData = errorBody as { error?: string; message?: string };
+    throw new Error(errData.error || errData.message || `HTTP ${response.status}`);
   }
 
   return response.json() as Promise<T>;

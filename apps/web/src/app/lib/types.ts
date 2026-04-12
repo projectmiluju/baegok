@@ -47,7 +47,7 @@ export interface Report {
   id: string;
   startDate: string;
   endDate: string;
-  reportType: "custom" | "weekly_auto";
+  reportType: "CUSTOM" | "WEEKLY_AUTO";
   summary: ReportSummary;
   roadmap?: ReportRoadmap;
   createdAt: string;
@@ -59,7 +59,16 @@ export interface WeeklyStats {
   topTag: string;
 }
 
+export interface GithubRepoRaw {
+  id: number;
+  full_name: string;
+  name: string;
+  description: string | null;
+  private: boolean;
+}
+
 export interface ApiError {
-  message: string;
+  error?: string;
+  message?: string;
   statusCode: number;
 }

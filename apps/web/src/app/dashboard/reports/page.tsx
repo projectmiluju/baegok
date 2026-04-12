@@ -33,8 +33,8 @@ export default function ReportsPage() {
     setIsLoading(true);
     setError(null);
     try {
-      const data = await apiFetch<Report[]>("/api/reports");
-      setReports(data);
+      const data = await apiFetch<{ reports: Report[] }>("/api/reports");
+      setReports(data.reports);
     } catch {
       setError(TEXT.error);
     } finally {
@@ -55,7 +55,7 @@ export default function ReportsPage() {
     try {
       await apiFetch<Report>("/api/reports", {
         method: "POST",
-        body: JSON.stringify({ startDate, endDate }),
+        body: JSON.stringify({ startDate, endDate, reportType: "custom" }),
       });
       setShowForm(false);
       setStartDate("");

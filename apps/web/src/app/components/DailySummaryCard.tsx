@@ -11,7 +11,12 @@ const TEXT = {
   commits: "커밋",
 } as const;
 
-export function DailySummaryCard({ date, summaryText, commitCount, tags }: DailySummaryCardProps) {
+export function DailySummaryCard({
+  date,
+  summaryText,
+  commitCount,
+  tags = [],
+}: DailySummaryCardProps) {
   return (
     <div
       className="rounded-xl border p-5"

@@ -26,7 +26,7 @@ const TEXT = {
 } as const;
 
 export function ReportCard({ id, startDate, endDate, reportType, summary }: ReportCardProps) {
-  const typeLabel = reportType === "weekly_auto" ? TEXT.weeklyAuto : TEXT.custom;
+  const typeLabel = reportType === "WEEKLY_AUTO" ? TEXT.weeklyAuto : TEXT.custom;
 
   return (
     <Link

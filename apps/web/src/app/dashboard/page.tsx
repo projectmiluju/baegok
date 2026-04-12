@@ -22,7 +22,8 @@ const TEXT = {
 } as const;
 
 function formatDate(date: Date): string {
-  return date.toISOString().split("T")[0];
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
 }
 
 function getRecentDates(days: number): string[] {
@@ -55,7 +56,9 @@ export default function DashboardPage() {
       const dates = getRecentDates(7);
 
       const summaryPromises = dates.map((date) =>
-        apiFetch<DailySummary>(`/api/summaries/daily?date=${date}`).catch(() => null),
+        apiFetch<{ summary: DailySummary }>(`/api/summaries/daily?date=${date}`)
+          .then((data) => data.summary)
+          .catch(() => null),
       );
 
       const results = await Promise.all(summaryPromises);
@@ -157,9 +160,9 @@ export default function DashboardPage() {
           </div>
         ) : recentSummaries.length > 0 ? (
           <div className="space-y-4">
-            {recentSummaries.map((summary) => (
+            {recentSummaries.map((summary, index) => (
               <DailySummaryCard
-                key={summary.id}
+                key={summary.id ?? `summary-${index}`}
                 date={summary.date}
                 summaryText={summary.summaryText}
                 commitCount={summary.commitCount}
