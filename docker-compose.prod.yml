@@ -14,11 +14,7 @@ services:
 
   # ── Next.js 프론트엔드 ──
   web:
-    build:
-      context: .
-      dockerfile: apps/web/Dockerfile
-      args:
-        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
+    image: ghcr.io/projectmiluju/baegok/web:latest
     container_name: baegok-web
     restart: unless-stopped
     expose:
@@ -26,9 +22,7 @@ services:
 
   # ── Hono API 서버 ──
   api:
-    build:
-      context: .
-      dockerfile: apps/api/Dockerfile
+    image: ghcr.io/projectmiluju/baegok/api:latest
     container_name: baegok-api
     restart: unless-stopped
     env_file:
@@ -43,9 +37,7 @@ services:
 
   # ── FastAPI AI 서버 ──
   ai:
-    build:
-      context: .
-      dockerfile: apps/ai/Dockerfile
+    image: ghcr.io/projectmiluju/baegok/ai:latest
     container_name: baegok-ai
     restart: unless-stopped
     env_file:
@@ -62,9 +54,7 @@ services:
 
   # ── Celery Worker ──
   celery-worker:
-    build:
-      context: .
-      dockerfile: apps/ai/Dockerfile
+    image: ghcr.io/projectmiluju/baegok/ai:latest
     container_name: baegok-celery-worker
     restart: unless-stopped
     command: celery -A src.celery_app worker --loglevel=info
@@ -75,9 +65,7 @@ services:
 
   # ── Celery Beat ──
   celery-beat:
-    build:
-      context: .
-      dockerfile: apps/ai/Dockerfile
+    image: ghcr.io/projectmiluju/baegok/ai:latest
     container_name: baegok-celery-beat
     restart: unless-stopped
     command: celery -A src.celery_app beat --loglevel=info

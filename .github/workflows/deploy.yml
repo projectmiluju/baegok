@@ -4,12 +4,56 @@ on:
   push:
     branches: [main]
 
+env:
+  REGISTRY: ghcr.io
+  IMAGE_PREFIX: ghcr.io/${{ github.repository }}
+
 jobs:
-  deploy:
+  build-and-push:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
     steps:
       - uses: actions/checkout@v4
 
+      - name: GHCR 로그인
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: API 이미지 빌드 + 푸시
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: apps/api/Dockerfile
+          push: true
+          tags: ${{ env.IMAGE_PREFIX }}/api:latest
+
+      - name: Web 이미지 빌드 + 푸시
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: apps/web/Dockerfile
+          push: true
+          tags: ${{ env.IMAGE_PREFIX }}/web:latest
+          build-args: |
+            NEXT_PUBLIC_API_URL=https://baegok.site
+
+      - name: AI 이미지 빌드 + 푸시
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: apps/ai/Dockerfile
+          push: true
+          tags: ${{ env.IMAGE_PREFIX }}/ai:latest
+
+  deploy:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    steps:
       - name: EC2 SSH 배포
         uses: appleboy/ssh-action@v1.2.0
         with:
@@ -19,7 +63,10 @@ jobs:
           script: |
             cd ~/baegok
             git pull origin main
-            docker compose --env-file .env.production -f docker-compose.prod.yml build
+
+            echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
+            docker compose --env-file .env.production -f docker-compose.prod.yml pull api web ai
             docker compose --env-file .env.production -f docker-compose.prod.yml up -d
             docker compose --env-file .env.production -f docker-compose.prod.yml exec -T api bunx prisma migrate deploy --schema apps/api/prisma/schema.prisma
             docker image prune -f
