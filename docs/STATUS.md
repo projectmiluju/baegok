@@ -6,6 +6,13 @@
 
 ## 최근 변경
 
+- **Issue #12 — AWS 배포 (QA 승인)**
+  - Dockerfile 3개 (api/Bun, web/Next.js standalone, ai/Python 3.9)
+  - docker-compose.prod.yml: 7 서비스 (nginx, web, api, ai, celery-worker, celery-beat, kafka+zk)
+  - Nginx 리버스 프록시 (/ → Next.js, /api → Node API)
+  - GitHub Actions deploy.yml: main 머지 시 SSH 배포 + Prisma migrate
+  - .env.production.example, .dockerignore
+  - QA 리뷰에서 P0 2건(패키지 매니저 혼재, frozen-lockfile) + P1 3건 발견 → 수정 완료
 - **Issue #11 — MCP 서버 (QA 승인)**
   - @modelcontextprotocol/sdk 기반 stdio 트랜스포트 MCP 서버
   - 4개 도구: `get_daily_summary`, `list_recent_summaries`, `get_period_report`, `get_roadmap`
@@ -80,11 +87,11 @@
 
 ## 기술 부채
 
-| 항목                                              | 등록일     | 예상 작업량    |
-| ------------------------------------------------- | ---------- | -------------- |
-| Prisma 6 → 7 마이그레이션                         | 2026-04-07 | M              |
-| deploy.yml 실제 배포 로직 구현                    | 2026-04-07 | M              |
-| `TOKEN_ENCRYPTION_KEY` AWS Secrets Manager로 이관 | 2026-04-10 | S (#12와 함께) |
+| 항목                                              | 등록일     | 예상 작업량          |
+| ------------------------------------------------- | ---------- | -------------------- |
+| Prisma 6 → 7 마이그레이션                         | 2026-04-07 | M                    |
+| ~~deploy.yml 실제 배포 로직 구현~~                | 2026-04-07 | ~~M~~ (#12에서 해결) |
+| `TOKEN_ENCRYPTION_KEY` AWS Secrets Manager로 이관 | 2026-04-10 | S (#12와 함께)       |
 
 ## 다음 계획
 
@@ -100,5 +107,5 @@
 - [x] Celery Beat 주간 자동 리포트 (#9, QA 승인)
 - [x] 대시보드 UI (#10, QA 승인)
 - [x] MCP 서버 (#11, QA 승인)
-- [ ] AWS 배포 (#12)
+- [x] AWS 배포 (#12, QA 승인)
 - [ ] AI 활용 리포트 + 최종 제출 (#13)
