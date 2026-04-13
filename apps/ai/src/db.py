@@ -21,7 +21,10 @@ class ReportTypeEnum(str, enum.Enum):
     CUSTOM = "custom"
 
 
-engine = create_async_engine(settings.async_database_url, echo=False)
+_db_url = settings.database_url
+if _db_url.startswith("postgresql://"):
+    _db_url = _db_url.replace("postgresql://", "postgresql+asyncpg://", 1)
+engine = create_async_engine(_db_url, echo=False)
 async_session = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
 
 

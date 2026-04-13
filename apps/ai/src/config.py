@@ -7,13 +7,6 @@ class Settings(BaseSettings):
     # Database
     database_url: str = "postgresql+asyncpg://baegok:baegok@localhost:5432/baegok"
 
-    @property
-    def async_database_url(self) -> str:
-        """DATABASE_URL이 postgresql://이면 +asyncpg를 자동 추가."""
-        url = self.database_url
-        if url.startswith("postgresql://"):
-            return url.replace("postgresql://", "postgresql+asyncpg://", 1)
-        return url
 
     # Kafka
     kafka_brokers: str = "localhost:9092"
