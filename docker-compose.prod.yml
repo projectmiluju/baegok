@@ -1,0 +1,109 @@
+services:
+  # ── Nginx 리버스 프록시 ──
+  nginx:
+    image: nginx:alpine
+    container_name: baegok-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - web
+      - api
+
+  # ── Next.js 프론트엔드 ──
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
+    container_name: baegok-web
+    restart: unless-stopped
+    expose:
+      - "3000"
+
+  # ── Hono API 서버 ──
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    container_name: baegok-api
+    restart: unless-stopped
+    env_file:
+      - .env.production
+    expose:
+      - "4000"
+    depends_on:
+      kafka:
+        condition: service_healthy
+
+  # ── FastAPI AI 서버 ──
+  ai:
+    build:
+      context: .
+      dockerfile: apps/ai/Dockerfile
+    container_name: baegok-ai
+    restart: unless-stopped
+    env_file:
+      - .env.production
+    expose:
+      - "8000"
+    depends_on:
+      kafka:
+        condition: service_healthy
+
+  # ── Celery Worker ──
+  celery-worker:
+    build:
+      context: .
+      dockerfile: apps/ai/Dockerfile
+    container_name: baegok-celery-worker
+    restart: unless-stopped
+    command: celery -A src.celery_app worker --loglevel=info
+    env_file:
+      - .env.production
+    depends_on:
+      - ai
+
+  # ── Celery Beat ──
+  celery-beat:
+    build:
+      context: .
+      dockerfile: apps/ai/Dockerfile
+    container_name: baegok-celery-beat
+    restart: unless-stopped
+    command: celery -A src.celery_app beat --loglevel=info
+    env_file:
+      - .env.production
+    depends_on:
+      - ai
+
+  # ── Kafka ──
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.7.0
+    container_name: baegok-zookeeper
+    restart: unless-stopped
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+
+  kafka:
+    image: confluentinc/cp-kafka:7.7.0
+    container_name: baegok-kafka
+    restart: unless-stopped
+    depends_on:
+      - zookeeper
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+    healthcheck:
+      test: ["CMD-SHELL", "kafka-broker-api-versions --bootstrap-server localhost:9092 || exit 1"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
