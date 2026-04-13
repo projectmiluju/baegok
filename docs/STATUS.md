@@ -1,11 +1,16 @@
 # 프로젝트 현황
 
 **최종 업데이트:** 2026-04-13
-**현재 버전:** v0.1.0 (예정 — Issue #3 머지 시점)
-**배포 URL:** 미정
+**현재 버전:** v0.1.0
+**배포 URL:** https://baegok.site
 
 ## 최근 변경
 
+- **Issue #13 — AI 활용 리포트 + 최종 제출**
+  - AI 활용 리포트 (docs/ai-report.md)
+  - README 최종화: 라이브 URL, 기술 스택, 개발 과정
+  - MCP 연결 가이드 페이지 (/dashboard/mcp)
+  - 배곡 파비콘 (Growth Teal + 새싹)
 - **Issue #12 — AWS 배포 (QA 승인)**
   - Dockerfile 3개 (api/Bun, web/Next.js standalone, ai/Python 3.9)
   - docker-compose.prod.yml: 7 서비스 (nginx, web, api, ai, celery-worker, celery-beat, kafka+zk)
@@ -108,6 +113,4 @@
 - [x] 대시보드 UI (#10, QA 승인)
 - [x] MCP 서버 (#11, QA 승인)
 - [x] AWS 배포 (#12, QA 승인)
-- [ ] AI 활용 리포트 + 최종 제출 (#13)
-
-# 파이프라인 테스트 Mon Apr 13 19:21:00 KST 2026
+- [x] AI 활용 리포트 + 최종 제출 (#13, 완료)
