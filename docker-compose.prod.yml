@@ -36,6 +36,8 @@ services:
     expose:
       - "4000"
     depends_on:
+      postgres:
+        condition: service_healthy
       kafka:
         condition: service_healthy
 
@@ -51,6 +53,10 @@ services:
     expose:
       - "8000"
     depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
       kafka:
         condition: service_healthy
 
@@ -80,6 +86,40 @@ services:
     depends_on:
       - ai
 
+  # ── PostgreSQL ──
+  postgres:
+    image: postgres:16-alpine
+    container_name: baegok-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${DB_USER:-baegok}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME:-baegok}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    expose:
+      - "5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U baegok"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # ── Redis ──
+  redis:
+    image: redis:7-alpine
+    container_name: baegok-redis
+    restart: unless-stopped
+    volumes:
+      - redis_data:/data
+    expose:
+      - "6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
   # ── Kafka ──
   zookeeper:
     image: confluentinc/cp-zookeeper:7.7.0
@@ -107,3 +147,7 @@ services:
       timeout: 10s
       retries: 5
       start_period: 30s
+
+volumes:
+  postgres_data:
+  redis_data:
