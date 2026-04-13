@@ -7,7 +7,7 @@ WORKDIR /app
 COPY package.json bun.lock ./
 COPY apps/api/package.json apps/api/
 COPY apps/api/prisma apps/api/prisma/
-RUN bun install --frozen-lockfile
+RUN bun install
 WORKDIR /app/apps/api
 RUN bunx prisma generate
 

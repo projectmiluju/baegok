@@ -5,7 +5,7 @@ WORKDIR /app
 FROM base AS deps
 COPY package.json bun.lock ./
 COPY apps/web/package.json apps/web/
-RUN bun install --frozen-lockfile
+RUN bun install
 
 # 빌드 (node 필요 — Next.js는 Node.js 런타임)
 FROM node:22-alpine AS builder
