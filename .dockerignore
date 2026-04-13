@@ -1,0 +1,15 @@
+node_modules
+.next
+dist
+__pycache__
+*.pyc
+.env
+.env.local
+.env.production
+.git
+.github
+docs
+*.md
+!README.md
+.vscode
+.cursor

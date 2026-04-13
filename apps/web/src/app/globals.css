@@ -1,0 +1,50 @@
+@import "tailwindcss";
+
+:root {
+  --color-cta: #2a9d99;
+  --color-cta-hover: #1e7a77;
+  --color-bg: #ffffff;
+  --color-bg-alt: #f6f5f4;
+  --color-text: rgba(0, 0, 0, 0.95);
+  --color-text-secondary: #615d59;
+  --color-text-muted: #a39e98;
+  --color-border: rgba(0, 0, 0, 0.1);
+  --color-border-light: rgba(0, 0, 0, 0.06);
+  --color-tag-bg: #e6f5f4;
+  --color-tag-text: #1e7a77;
+  --color-warning: #dd5b00;
+  --color-error: #d93026;
+  --color-link: #0075de;
+  --color-focus: #097fe8;
+  --color-warm-dark: #31302e;
+  --shadow-card: rgba(0, 0, 0, 0.04) 0px 4px 18px,
+    rgba(0, 0, 0, 0.027) 0px 2.025px 7.85px,
+    rgba(0, 0, 0, 0.02) 0px 0.8px 2.93px,
+    rgba(0, 0, 0, 0.01) 0px 0.175px 1.04px;
+}
+
+@theme inline {
+  --color-background: var(--color-bg);
+  --color-foreground: var(--color-text);
+  --color-cta: #2a9d99;
+  --color-cta-hover: #1e7a77;
+  --font-sans: "Inter", "Pretendard", -apple-system, system-ui, sans-serif;
+}
+
+* {
+  word-break: keep-all;
+}
+
+body {
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-sans);
+  font-size: 16px;
+  line-height: 1.6;
+}
+
+/* Focus ring for accessibility */
+*:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}

@@ -1,0 +1,47 @@
+{
+  "name": "baegok",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "AI 기반 학습 성장 트래커",
+  "workspaces": [
+    "apps/*"
+  ],
+  "scripts": {
+    "dev:web": "bun --filter web dev",
+    "dev:api": "bun --filter api dev",
+    "dev:mcp": "bun --filter mcp dev",
+    "build": "bun --filter '*' build",
+    "lint": "bun --filter '*' lint",
+    "lint:py": "cd apps/ai && ruff check . && black --check .",
+    "format": "bun --filter '*' format",
+    "format:py": "cd apps/ai && ruff check --fix . && black .",
+    "typecheck": "bun --filter '*' typecheck",
+    "test": "bun --filter api --filter mcp test",
+    "test:coverage": "bun --filter api --filter mcp test:coverage",
+    "test:api": "bun --filter api test",
+    "test:e2e": "bun --filter web test:e2e",
+    "prepare": "husky"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "^19.0.0",
+    "@commitlint/config-conventional": "^19.0.0",
+    "@eslint/js": "^10.0.1",
+    "eslint": "^9.0.0",
+    "husky": "^9.0.0",
+    "lint-staged": "^15.0.0",
+    "prettier": "^3.8.1"
+  },
+  "lint-staged": {
+    "*.{ts,tsx,js,jsx}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{json,md,yml,yaml}": [
+      "prettier --write"
+    ],
+    "Dockerfile*": [
+      "hadolint"
+    ]
+  }
+}

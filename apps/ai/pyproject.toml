@@ -1,0 +1,18 @@
+[tool.ruff]
+target-version = "py39"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "W", "UP"]
+
+[tool.ruff.lint.per-file-ignores]
+"src/tests/**" = ["N802", "E501"]  # 한글 테스트 함수명 + 긴 mock 줄 허용
+"src/db.py" = ["UP045"]  # SQLAlchemy Mapped[]는 런타임 eval — Optional 필수
+
+[tool.black]
+target-version = ["py39"]
+line-length = 100
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+pythonpath = ["."]

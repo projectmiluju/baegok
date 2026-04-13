@@ -1,0 +1,96 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id             String   @id @default(cuid())
+  githubId       Int      @unique @map("github_id")
+  githubUsername  String   @map("github_username")
+  avatarUrl      String?  @map("avatar_url")
+  accessToken    String   @map("access_token")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  repositories   Repository[]
+  dailySummaries DailySummary[]
+  periodReports  PeriodReport[]
+
+  @@map("users")
+}
+
+model Repository {
+  id            String    @id @default(cuid())
+  userId        String    @map("user_id")
+  githubRepoId  Int       @map("github_repo_id")
+  fullName      String    @map("full_name")
+  webhookId     Int?      @map("webhook_id")
+  webhookSecret String?   @map("webhook_secret")
+  isActive      Boolean   @default(true) @map("is_active")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  deletedAt     DateTime? @map("deleted_at")
+
+  user           User             @relation(fields: [userId], references: [id])
+  commitAnalyses CommitAnalysis[]
+
+  @@unique([userId, githubRepoId])
+  @@map("repositories")
+}
+
+model CommitAnalysis {
+  id            String    @id @default(cuid())
+  repositoryId  String    @map("repository_id")
+  commitSha     String    @map("commit_sha")
+  commitMessage String    @map("commit_message")
+  committedAt   DateTime  @map("committed_at")
+  diffSummary   String?   @map("diff_summary") @db.Text
+  tags          Json      @default("[]")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  deletedAt     DateTime? @map("deleted_at")
+
+  repository Repository @relation(fields: [repositoryId], references: [id])
+
+  @@unique([repositoryId, commitSha])
+  @@map("commit_analyses")
+}
+
+model DailySummary {
+  id          String   @id @default(cuid())
+  userId      String   @map("user_id")
+  date        DateTime @db.Date
+  summaryText String?  @map("summary_text") @db.Text
+  commitCount Int      @default(0) @map("commit_count")
+  tags        Json     @default("[]")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@unique([userId, date])
+  @@map("daily_summaries")
+}
+
+enum ReportType {
+  WEEKLY_AUTO @map("weekly_auto")
+  CUSTOM      @map("custom")
+}
+
+model PeriodReport {
+  id         String     @id @default(cuid())
+  userId     String     @map("user_id")
+  startDate  DateTime   @map("start_date") @db.Date
+  endDate    DateTime   @map("end_date") @db.Date
+  reportType ReportType @map("report_type")
+  summary    Json       @default("{}")
+  roadmap    Json       @default("{}")
+  createdAt  DateTime   @default(now()) @map("created_at")
+  deletedAt  DateTime?  @map("deleted_at")
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@map("period_reports")
+}
