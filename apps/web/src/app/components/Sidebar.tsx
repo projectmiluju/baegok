@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, GitFork, FileText, LogOut, Menu, X } from "lucide-react";
+import { LayoutDashboard, GitFork, FileText, Plug, LogOut, Menu, X } from "lucide-react";
 import { useAuthStore } from "../lib/auth-store";
 import { apiFetch } from "../lib/api";
 
@@ -12,6 +12,7 @@ const TEXT = {
   dashboard: "대시보드",
   repos: "레포 관리",
   reports: "리포트",
+  mcp: "MCP 연결",
   logout: "로그아웃",
 } as const;
 
@@ -19,6 +20,7 @@ const NAV_ITEMS = [
   { href: "/dashboard", label: TEXT.dashboard, icon: LayoutDashboard },
   { href: "/dashboard/repos", label: TEXT.repos, icon: GitFork },
   { href: "/dashboard/reports", label: TEXT.reports, icon: FileText },
+  { href: "/dashboard/mcp", label: TEXT.mcp, icon: Plug },
 ] as const;
 
 export function Sidebar() {
