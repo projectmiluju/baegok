@@ -11,7 +11,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: EC2 SSH 배포
-        uses: appleboy/ssh-action@v1
+        uses: appleboy/ssh-action@v1.2.0
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
@@ -19,7 +19,7 @@ jobs:
           script: |
             cd ~/baegok
             git pull origin main
-            docker compose -f docker-compose.prod.yml build
-            docker compose -f docker-compose.prod.yml up -d
-            docker compose -f docker-compose.prod.yml exec -T api bunx prisma migrate deploy
+            docker compose --env-file .env.production -f docker-compose.prod.yml build
+            docker compose --env-file .env.production -f docker-compose.prod.yml up -d
+            docker compose --env-file .env.production -f docker-compose.prod.yml exec -T api bunx prisma migrate deploy --schema apps/api/prisma/schema.prisma
             docker image prune -f

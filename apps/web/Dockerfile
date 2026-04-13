@@ -1,17 +1,16 @@
-# hadolint ignore=DL3006
-FROM node:22-alpine AS base
+FROM oven/bun:1.2-alpine AS base
 WORKDIR /app
 
 # 의존성 설치
 FROM base AS deps
-# hadolint ignore=DL3018
-RUN apk add --no-cache libc6-compat
+COPY package.json bun.lock ./
 COPY apps/web/package.json apps/web/
-WORKDIR /app/apps/web
-RUN npm install
+RUN bun install --frozen-lockfile
 
-# 빌드
-FROM base AS builder
+# 빌드 (node 필요 — Next.js는 Node.js 런타임)
+FROM node:22-alpine AS builder
+WORKDIR /app
+COPY --from=deps /app/node_modules ./node_modules
 COPY --from=deps /app/apps/web/node_modules ./apps/web/node_modules
 COPY apps/web apps/web/
 ARG NEXT_PUBLIC_API_URL
@@ -21,7 +20,8 @@ WORKDIR /app/apps/web
 RUN npx next build
 
 # 런타임
-FROM base AS runner
+FROM node:22-alpine AS runner
+WORKDIR /app
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 RUN addgroup --system --gid 1001 nodejs && \

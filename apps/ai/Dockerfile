@@ -4,9 +4,12 @@ WORKDIR /app
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 
-# 의존성 설치
+# 의존성 설치 (테스트 의존성 제외)
 COPY apps/ai/requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+# hadolint ignore=DL3013,SC2046
+RUN grep -Ev '^(pytest|pytest-asyncio)' requirements.txt > requirements.prod.txt && \
+    pip install --no-cache-dir -r requirements.prod.txt && \
+    rm requirements.prod.txt
 
 # 소스 복사
 COPY apps/ai/src ./src
