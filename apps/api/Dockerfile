@@ -25,8 +25,6 @@ ENV NODE_ENV=production
 COPY --from=deps /app/node_modules ./node_modules
 COPY --from=builder /app/apps/api/dist ./dist
 COPY --from=deps /app/apps/api/prisma ./apps/api/prisma
-COPY --from=deps /app/apps/api/node_modules/.prisma ./node_modules/.prisma
-COPY --from=deps /app/apps/api/node_modules/@prisma ./node_modules/@prisma
 
 EXPOSE 4000
 CMD ["bun", "run", "dist/index.js"]
