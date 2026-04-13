@@ -63,10 +63,7 @@ jobs:
           script: |
             cd ~/baegok
             git pull origin main
-
-            echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-
-            docker compose --env-file .env.production -f docker-compose.prod.yml pull api web ai
+            docker compose --env-file .env.production -f docker-compose.prod.yml pull api web ai || true
             docker compose --env-file .env.production -f docker-compose.prod.yml up -d
             docker compose --env-file .env.production -f docker-compose.prod.yml exec -T api bunx prisma migrate deploy --schema apps/api/prisma/schema.prisma
             docker image prune -f
