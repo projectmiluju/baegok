@@ -4,16 +4,19 @@
 
 **🔗 라이브 URL: https://baegok.site**
 
+**📋 공모전:** 2026 KIT 바이브코딩 공모전 — AI활용 차세대 교육 솔루션
+
 IT 교육생들이 매일 커밋하는 코드를 AI가 자동으로 분석하여,
 "오늘 뭘 했는지", "이번 달 뭐가 부족한지", "다음에 뭘 공부해야 하는지"를 알려줍니다.
 
 ## 핵심 기능
 
-- **일일 학습 요약** — push 시 커밋 diff를 AI(Claude)가 분석하여 자동 정리
-- **기간별 학습 리포트** — 특정 기간 동안의 학습 패턴, 강점/약점 분석
-- **학습 로드맵** — AI 기반 다음 학습 방향 제안
-- **MCP 서버** — Cursor, Claude Code 등 IDE에서 학습 데이터 직접 조회
-- **주간 자동 리포트** — Celery Beat으로 매주 학습 요약 자동 생성
+- **자동 커밋 분석** — GitHub push 시 Claude API가 코드 diff를 분석하여 학습 내용 요약 + 기술 태그 추출
+- **일일 학습 요약** — 하루의 커밋 분석을 통합하여 한국어 학습 요약 자동 생성
+- **기간별 학습 리포트** — 강점/약점/통계 분석 + AI 기반 학습 로드맵 제안
+- **MCP 서버** — Cursor, Claude Code 등 IDE에서 학습 데이터 직접 조회 (4개 도구)
+- **주간 자동 리포트** — Celery Beat으로 매주 월요일 학습 요약 자동 생성
+- **대시보드** — GitHub 로그인 → 레포 연결 → 일일 요약/리포트 조회 원스톱 웹 UI
 
 ## 아키텍처
 
@@ -47,17 +50,17 @@ IT 교육생들이 매일 커밋하는 코드를 AI가 자동으로 분석하여
 | 스케줄러    | Celery + Redis                                  |
 | DB          | PostgreSQL 16                                   |
 | 인프라      | AWS EC2, Docker Compose, Nginx, Let's Encrypt   |
-| CI/CD       | GitHub Actions                                  |
+| CI/CD       | GitHub Actions (GHCR 이미지 빌드 + SSH 배포)    |
 | 도메인      | Gabia (baegok.site)                             |
 
-기술 결정 근거는 [ADR 문서](docs/decisions/)를 참고하세요.
+기술 결정 근거는 [ADR 문서](docs/decisions/) (11건)를 참고하세요.
 
 ## 프로젝트 구조
 
 ```
 baegok/
 ├── apps/
-│   ├── web/          # Next.js 프론트엔드 (7 라우트, 8 컴포넌트)
+│   ├── web/          # Next.js 프론트엔드 (8 라우트, 8 컴포넌트)
 │   ├── api/          # Hono API 서버 (OAuth, Webhook, CRUD)
 │   ├── ai/           # FastAPI AI 서버 (Claude 분석, Celery)
 │   └── mcp/          # MCP 서버 (4 도구)
@@ -66,12 +69,13 @@ baegok/
 │   ├── decisions/    # 기술 결정 기록 (ADR 11건)
 │   ├── devlog/       # 개발 일지 (4건)
 │   ├── design/       # 디자인 시스템 + 컴포넌트 명세
+│   ├── ai-report.md  # AI 활용 리포트
 │   └── STATUS.md     # 프로젝트 현황
-├── nginx/            # Nginx 리버스 프록시 설정
+├── nginx/            # Nginx 리버스 프록시 (HTTPS)
 ├── docker-compose.yml          # 로컬 개발 (인프라)
-├── docker-compose.prod.yml     # 운영 배포 (전체 서비스)
+├── docker-compose.prod.yml     # 운영 배포 (10 서비스)
 └── .github/
-    ├── workflows/    # CI/CD (ci.yml, deploy.yml)
+    ├── workflows/    # CI (ci.yml) + CD (deploy.yml)
     ├── ISSUE_TEMPLATE/
     └── pull_request_template.md
 ```
@@ -108,28 +112,32 @@ cd apps/web && bun dev       # 프론트엔드 (:3000)
 cd apps/mcp && bun dev       # MCP 서버
 ```
 
-## 개발 과정
+## 개발 과정 (7일, 12개 이슈)
 
-| 이슈 | 기능                         | 테스트 |
-| ---- | ---------------------------- | ------ |
-| #1   | 모노레포 구조 + 개발 환경    | -      |
-| #3   | GitHub OAuth + JWT 세션      | 30개   |
-| #4   | 레포 연결 + Webhook 등록     | 10개   |
-| #5   | Webhook → Kafka 발행         | 9개    |
-| #6   | Kafka Consumer + Claude 분석 | 10개   |
-| #7   | 일일 학습 요약 API           | 11개   |
-| #8   | 기간 리포트 + 로드맵         | 15개   |
-| #9   | Celery Beat 주간 자동 리포트 | 5개    |
-| #10  | 대시보드 UI                  | -      |
-| #11  | MCP 서버                     | 5개    |
-| #12  | AWS 배포 (HTTPS)             | -      |
+| 이슈 | 기능                               | 테스트 |
+| ---- | ---------------------------------- | ------ |
+| #1   | 모노레포 구조 + 개발 환경 세팅     | -      |
+| #3   | GitHub OAuth + JWT 세션            | 30개   |
+| #4   | 레포 연결 + Webhook 자동 등록      | 10개   |
+| #5   | Webhook → Kafka 발행               | 9개    |
+| #6   | Kafka Consumer + Claude diff 분석  | 10개   |
+| #7   | 일일 학습 요약 API                 | 11개   |
+| #8   | 기간 리포트 + 학습 로드맵          | 15개   |
+| #9   | Celery Beat 주간 자동 리포트       | 5개    |
+| #10  | 대시보드 UI (Notion 스타일)        | -      |
+| #11  | MCP 서버 (4 도구)                  | 5개    |
+| #12  | AWS 배포 (HTTPS + 도메인)          | -      |
+| #13  | AI 리포트 + MCP 가이드 + 최종 제출 | -      |
 
-**7일 개발, 12개 이슈, 19 PR, 95+ 테스트, 11 ADR**
+**7일 개발 · 12개 이슈 · 23 PR · 100 테스트 · 11 ADR · 4 Dev Log**
 
 ## AI 활용
 
-이 프로젝트는 [miluju-studio](docs/ai-report.md) AI 워크플로우로 개발되었습니다.
-자세한 AI 활용 과정은 [AI 활용 리포트](docs/ai-report.md)를 참고하세요.
+이 프로젝트는 자체 개발한 **miluju-studio** AI 워크플로우 시스템으로 개발되었습니다.
+AI를 단순 코드 생성기가 아닌 역할별 전문가(기획/디자인/구현/테스트/릴리즈/문서화)로 활용하여,
+1인 개발자가 7일 만에 풀스택 MVP를 완성했습니다.
+
+자세한 내용은 [AI 활용 리포트](docs/ai-report.md)를 참고하세요.
 
 ## 라이선스
 

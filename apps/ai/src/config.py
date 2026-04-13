@@ -7,6 +7,7 @@ class Settings(BaseSettings):
     # Database
     database_url: str = "postgresql+asyncpg://baegok:baegok@localhost:5432/baegok"
 
+
     # Kafka
     kafka_brokers: str = "localhost:9092"
     kafka_group_id: str = "ai-analyzer"
